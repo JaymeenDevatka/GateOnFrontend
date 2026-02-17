@@ -1,22 +1,23 @@
-import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext.jsx';
+import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext.jsx";
 
 const navLinkClasses = ({ isActive }) =>
   `text-sm font-medium px-4 py-2 rounded-full transition-all duration-200 ${
-    isActive 
-      ? 'bg-brand/10 text-brand font-semibold' 
-      : 'text-slate-600 hover:text-brand hover:bg-slate-50'
+    isActive
+      ? "bg-brand/10 text-brand font-semibold"
+      : "text-slate-600 hover:text-brand hover:bg-slate-50"
   }`;
 
 function Navbar() {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, role, setRole, logout, isAuthenticated, hasRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleNavClick = (e, path) => {
+    if (path === "/events") return;
     if (!isAuthenticated()) {
       e.preventDefault();
-      navigate('/login', { state: { from: { pathname: path } } });
+      navigate("/login", { state: { from: { pathname: path } } });
     }
   };
 
@@ -28,59 +29,78 @@ function Navbar() {
             G
           </div>
           <div className="flex flex-col leading-tight">
-            <span className="font-bold text-slate-900 text-base tracking-tight group-hover:text-brand transition-colors">GateOn</span>
-            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Events & tickets</span>
+            <span className="font-bold text-slate-900 text-base tracking-tight group-hover:text-brand transition-colors">
+              GateOn
+            </span>
+            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+              Events & tickets
+            </span>
           </div>
         </Link>
 
         <div className="hidden md:flex items-center gap-1">
-          <NavLink
-            to="/events"
-            className={navLinkClasses}
-            onClick={(e) => handleNavClick(e, '/events')}
-          >
+          <NavLink to="/events" className={navLinkClasses}>
             Browse events
           </NavLink>
-          <NavLink
-            to="/create-event"
-            className={navLinkClasses}
-            onClick={(e) => handleNavClick(e, '/create-event')}
-          >
-            Create event
-          </NavLink>
-          <NavLink
-            to="/organizer"
-            className={navLinkClasses}
-            onClick={(e) => handleNavClick(e, '/organizer')}
-          >
-            Organizer
-          </NavLink>
+          {(hasRole(["Admin", "Event Manager"]) || !user) && (
+            <NavLink
+              to="/create-event"
+              className={navLinkClasses}
+              onClick={(e) => handleNavClick(e, "/create-event")}
+            >
+              Create event
+            </NavLink>
+          )}
+          {(hasRole(["Admin", "Event Manager"]) || !user) && (
+            <NavLink
+              to="/organizer"
+              className={navLinkClasses}
+              onClick={(e) => handleNavClick(e, "/organizer")}
+            >
+              Organizer
+            </NavLink>
+          )}
           <NavLink
             to="/attendee"
             className={navLinkClasses}
-            onClick={(e) => handleNavClick(e, '/attendee')}
+            onClick={(e) => handleNavClick(e, "/attendee")}
           >
             My tickets
           </NavLink>
-          <NavLink
-            to="/check-in"
-            className={navLinkClasses}
-            onClick={(e) => handleNavClick(e, '/check-in')}
-          >
-            Check-in
-          </NavLink>
-          <NavLink
-            to="/analytics"
-            className={navLinkClasses}
-            onClick={(e) => handleNavClick(e, '/analytics')}
-          >
-            Analytics
-          </NavLink>
+          {(hasRole(["Admin", "Event Manager", "Volunteer"]) || !user) && (
+            <NavLink
+              to="/check-in"
+              className={navLinkClasses}
+              onClick={(e) => handleNavClick(e, "/check-in")}
+            >
+              Check-in
+            </NavLink>
+          )}
+          {(hasRole(["Admin", "Event Manager"]) || !user) && (
+            <NavLink
+              to="/analytics"
+              className={navLinkClasses}
+              onClick={(e) => handleNavClick(e, "/analytics")}
+            >
+              Analytics
+            </NavLink>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
           {user ? (
             <>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="hidden sm:inline-flex text-xs border border-slate-200 rounded-full px-3 py-2 bg-white"
+                aria-label="Role"
+              >
+                <option value="Admin">Admin</option>
+                <option value="Event Manager">Event Manager</option>
+                <option value="Volunteer">Volunteer</option>
+                <option value="Attendee">Attendee</option>
+              </select>
               <span className="hidden sm:inline-flex text-xs text-slate-600 px-3">
                 {user.name}
               </span>
@@ -116,4 +136,3 @@ function Navbar() {
 }
 
 export default Navbar;
-
