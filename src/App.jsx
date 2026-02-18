@@ -9,7 +9,6 @@ import Checkout from "./pages/Checkout.jsx";
 import OrganizerDashboard from "./pages/OrganizerDashboard.jsx";
 import AttendeeDashboard from "./pages/AttendeeDashboard.jsx";
 import CheckIn from "./pages/CheckIn.jsx";
-import Analytics from "./pages/Analytics.jsx";
 import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
@@ -46,7 +45,7 @@ function Guard({ children, requireAuth = false, roles = [] }) {
 
 function App() {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-surface">
       <Navbar />
       <main className="flex-1 pt-20 pb-12">
         <Routes>
@@ -95,14 +94,6 @@ function App() {
                 roles={["Admin", "Event Manager", "Volunteer"]}
               >
                 <CheckIn />
-              </Guard>
-            }
-          />
-          <Route
-            path="/analytics"
-            element={
-              <Guard requireAuth roles={["Admin", "Event Manager"]}>
-                <Analytics />
               </Guard>
             }
           />

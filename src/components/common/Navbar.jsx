@@ -1,17 +1,26 @@
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { useState, useEffect } from "react";
 
 const navLinkClasses = ({ isActive }) =>
-  `text-sm font-medium px-4 py-2 rounded-full transition-all duration-200 ${
-    isActive
-      ? "bg-brand/10 text-brand font-semibold"
-      : "text-slate-600 hover:text-brand hover:bg-slate-50"
+  `relative px-4 py-2 text-sm font-semibold transition-all duration-300 rounded-full ${isActive
+    ? "text-white bg-brand shadow-sm border border-brand/40"
+    : "text-slate-300 hover:bg-slate-600/50 hover:text-white"
   }`;
 
 function Navbar() {
-  const { user, role, setRole, logout, isAuthenticated, hasRole } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleNavClick = (e, path) => {
     if (path === "/events") return;
@@ -22,44 +31,46 @@ function Navbar() {
   };
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 shadow-sm transition-all duration-300">
-      <nav className="container-page flex items-center justify-between py-4 gap-4">
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand to-brand-dark text-white flex items-center justify-center font-bold text-lg shadow-lg shadow-brand/30 group-hover:scale-105 transition-transform duration-300">
-            G
+    <header
+      className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${scrolled ? "shadow-lg bg-slate-800/98 backdrop-blur-md" : "bg-slate-800/95 backdrop-blur-sm"
+        }`}
+    >
+      <nav className="container-page flex items-center justify-between py-2.5">
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="relative h-12 w-auto flex items-center justify-center">
+            <img
+              src="/logo.png"
+              alt="Logo"
+              className="h-12 w-12 object-cover rounded-full drop-shadow-md group-hover:scale-105 transition-transform duration-300"
+            />
           </div>
-          <div className="flex flex-col leading-tight">
-            <span className="font-bold text-slate-900 text-base tracking-tight group-hover:text-brand transition-colors">
+          <div className="flex flex-col leading-none hidden sm:flex">
+            <span className="font-display font-bold text-white text-lg tracking-tight group-hover:text-brand-light transition-colors">
               GateOn
             </span>
-            <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
-              Events & tickets
-            </span>
+            <span className="text-xs text-slate-400">Events & Tickets</span>
           </div>
         </Link>
 
-        <div className="hidden md:flex items-center gap-1">
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center gap-2 bg-slate-700/60 p-1.5 rounded-full border border-slate-600/50 backdrop-blur-sm">
           <NavLink to="/events" className={navLinkClasses}>
             Browse events
           </NavLink>
-          {(hasRole(["Admin", "Event Manager"]) || !user) && (
-            <NavLink
-              to="/create-event"
-              className={navLinkClasses}
-              onClick={(e) => handleNavClick(e, "/create-event")}
-            >
-              Create event
-            </NavLink>
-          )}
-          {(hasRole(["Admin", "Event Manager"]) || !user) && (
-            <NavLink
-              to="/organizer"
-              className={navLinkClasses}
-              onClick={(e) => handleNavClick(e, "/organizer")}
-            >
-              Organizer
-            </NavLink>
-          )}
+          <NavLink
+            to="/create-event"
+            className={navLinkClasses}
+            onClick={(e) => handleNavClick(e, "/create-event")}
+          >
+            Create event
+          </NavLink>
+          <NavLink
+            to="/organizer"
+            className={navLinkClasses}
+            onClick={(e) => handleNavClick(e, "/organizer")}
+          >
+            Organizer
+          </NavLink>
           <NavLink
             to="/attendee"
             className={navLinkClasses}
@@ -67,46 +78,25 @@ function Navbar() {
           >
             My tickets
           </NavLink>
-          {(hasRole(["Admin", "Event Manager", "Volunteer"]) || !user) && (
-            <NavLink
-              to="/check-in"
-              className={navLinkClasses}
-              onClick={(e) => handleNavClick(e, "/check-in")}
-            >
-              Check-in
-            </NavLink>
-          )}
-          {(hasRole(["Admin", "Event Manager"]) || !user) && (
-            <NavLink
-              to="/analytics"
-              className={navLinkClasses}
-              onClick={(e) => handleNavClick(e, "/analytics")}
-            >
-              Analytics
-            </NavLink>
-          )}
+          <NavLink
+            to="/check-in"
+            className={navLinkClasses}
+            onClick={(e) => handleNavClick(e, "/check-in")}
+          >
+            Check-in
+          </NavLink>
+
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {user ? (
             <>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="hidden sm:inline-flex text-xs border border-slate-200 rounded-full px-3 py-2 bg-white"
-                aria-label="Role"
-              >
-                <option value="Admin">Admin</option>
-                <option value="Event Manager">Event Manager</option>
-                <option value="Volunteer">Volunteer</option>
-                <option value="Attendee">Attendee</option>
-              </select>
-              <span className="hidden sm:inline-flex text-xs text-slate-600 px-3">
+              <span className="hidden sm:inline-flex text-sm text-slate-200 font-medium px-3">
                 {user.name}
               </span>
               <button
                 onClick={logout}
-                className="inline-flex px-4 py-2 text-sm font-medium rounded-full border border-slate-200 hover:bg-slate-50"
+                className="inline-flex px-5 py-2.5 text-sm font-bold rounded-full border-2 border-slate-500 bg-slate-700/50 text-slate-200 hover:border-brand hover:text-white hover:bg-slate-600/50 transition-all"
               >
                 Log out
               </button>
@@ -116,14 +106,14 @@ function Navbar() {
               <Link
                 to="/login"
                 state={{ from: { pathname: location.pathname } }}
-                className="hidden sm:inline-flex px-4 py-2 text-sm font-medium rounded-full border border-slate-200 hover:bg-slate-50"
+                className="hidden sm:inline-flex px-5 py-2.5 text-sm font-bold rounded-full text-slate-200 hover:text-white hover:bg-slate-600/50 transition-colors"
               >
                 Log in
               </Link>
               <Link
                 to="/signup"
                 state={{ from: { pathname: location.pathname } }}
-                className="inline-flex px-4 py-2 text-sm font-semibold rounded-full bg-brand text-white hover:bg-brand-dark shadow-sm"
+                className="inline-flex px-6 py-2.5 text-sm font-bold rounded-full bg-gradient-to-r from-brand to-brand-dark text-white shadow-lg shadow-brand/30 hover:shadow-glow hover:scale-105 transition-all duration-300"
               >
                 Sign up
               </Link>

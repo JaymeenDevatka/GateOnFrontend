@@ -2,7 +2,6 @@ function OrganizerStats({ stats }) {
   const items = [
     { label: 'Live events', value: stats.liveEvents },
     { label: 'Tickets sold', value: stats.ticketsSold },
-    { label: 'Revenue', value: `₹${stats.revenue.toLocaleString()}` },
     { label: 'This week views', value: stats.views }
   ];
 

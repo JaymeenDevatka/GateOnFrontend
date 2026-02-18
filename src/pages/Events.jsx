@@ -22,39 +22,43 @@ function Events() {
   }, [events, page]);
 
   return (
-    <div className="container-page space-y-5">
-      <div className="flex items-center justify-between pt-1 gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900">
-            Browse events
+    <div className="container-page space-y-8 relative">
+      {/* Background Gradient Blob */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-64 bg-gradient-to-r from-brand/20 via-secondary/20 to-brand/20 blur-3xl opacity-50 -z-10 rounded-full" />
+
+      <div className="flex flex-col items-center justify-center pt-12 pb-8 gap-8 text-center relative z-10">
+        <div className="space-y-2 animate-slide-up">
+          <h1 className="text-3xl font-display font-bold text-slate-900">
+            Find your next experience
           </h1>
-          <p className="text-sm text-slate-500">
-            Search and filter by category, location, rating, and trending.
+          <p className="text-slate-500 max-w-lg mx-auto">
+            Search for events, concerts, sports, and more. Filter by location and category to find exactly what you're looking for.
           </p>
         </div>
-        <div className="inline-flex items-center rounded-full border border-slate-200 bg-surface-elevated p-1 text-xs shadow-sm">
+
+        <div className="w-full animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <EventFilters value={filters} onChange={setFilters} />
+        </div>
+
+        <div className="inline-flex items-center rounded-full border border-slate-200 bg-white p-1 shadow-sm animate-slide-up" style={{ animationDelay: '0.2s' }}>
           <button
-            className={`px-3 py-1.5 rounded-full ${
-              view === "list" ? "bg-slate-900 text-white" : "text-slate-700"
-            }`}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${view === "list" ? "bg-slate-900 text-white shadow-md" : "text-slate-600 hover:bg-slate-50"
+              }`}
             onClick={() => setView("list")}
             type="button"
           >
-            List
+            List View
           </button>
           <button
-            className={`px-3 py-1.5 rounded-full ${
-              view === "map" ? "bg-slate-900 text-white" : "text-slate-700"
-            }`}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${view === "map" ? "bg-slate-900 text-white shadow-md" : "text-slate-600 hover:bg-slate-50"
+              }`}
             onClick={() => setView("map")}
             type="button"
           >
-            Map
+            Map View
           </button>
         </div>
       </div>
-
-      <EventFilters value={filters} onChange={setFilters} />
 
       {view === "list" ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
