@@ -44,10 +44,13 @@ function Guard({ children, requireAuth = false, roles = [] }) {
 }
 
 function App() {
+  const location = useLocation();
+  const isAuthPage = ['/login', '/signup'].includes(location.pathname);
+
   return (
     <div className="min-h-screen flex flex-col bg-surface">
       <Navbar />
-      <main className="flex-1 pt-20 pb-12">
+      <main className={isAuthPage ? "flex-1" : "flex-1 pt-20 pb-12"}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -99,7 +102,7 @@ function App() {
           />
         </Routes>
       </main>
-      <Footer />
+      {!isAuthPage && <Footer />}
     </div>
   );
 }

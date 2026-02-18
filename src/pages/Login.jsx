@@ -53,52 +53,26 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex text-slate-800 font-sans bg-slate-50">
-      {/* Visual Side */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-slate-900">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-dark via-slate-900 to-secondary-dark opacity-90" />
-        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=2670&auto=format&fit=crop')] bg-cover bg-center mix-blend-overlay opacity-40" />
+    <div className="h-screen w-full flex items-center justify-center text-slate-900 font-sans bg-slate-50 relative overflow-hidden pt-20">
+      <div className="absolute inset-0 bg-[url('/login2.jpg')] bg-cover bg-center contrast-125 brightness-110 saturate-125" />
+      <div className="absolute inset-0 bg-black/10" />
 
-        {/* Animated Background Elements */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand/30 rounded-full blur-[100px] animate-pulse-slow" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/30 rounded-full blur-[100px] animate-pulse-slow animation-delay-2000" />
-
-        <div className="relative z-10 m-auto max-w-lg px-10 text-center text-white">
-          <div className="mb-8 flex justify-center">
-            <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl">
-              <img src="/logo.png" alt="GateOn Logo" className="h-16 w-16 object-contain drop-shadow-lg" />
-            </div>
-          </div>
-          <h2 className="text-5xl font-bold font-display mb-6 tracking-tight leading-tight">
-            Elevate Your <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-light to-secondary-light">Event Experience</span>
-          </h2>
-          <p className="text-lg text-slate-300 leading-relaxed font-light">
-            Discover the best events in your city, or host your own with our world-class platform. Join thousands of organizers today.
-          </p>
-        </div>
-
-        {/* Footer info */}
-        <div className="absolute bottom-8 left-0 right-0 text-center text-slate-500 text-xs">
-          © {new Date().getFullYear()} GateOn Inc. All rights reserved.
-        </div>
-      </div>
-
-      {/* Form Side */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative">
-        <div className="w-full max-w-md space-y-8 animate-fade-in bg-white/50 backdrop-blur-sm p-8 rounded-3xl border border-slate-200/50 shadow-xl">
+      {/* Metallic Gradient Border Wrapper */}
+      <div className="w-full max-w-sm animate-float p-[3px] rounded-3xl bg-gradient-to-br from-slate-900 via-slate-500 to-slate-900 shadow-2xl relative z-10">
+        <div className="w-full h-full bg-gradient-to-br from-white/95 to-slate-100/90 backdrop-blur-md p-6 rounded-[21px] ring-1 ring-inset ring-white/50">
           <div className="text-center">
-            <div className="lg:hidden flex justify-center mb-6">
-              <img src="/logo.png" alt="GateOn Logo" className="h-12 w-12 object-contain" />
+            <div className="flex justify-center mb-6">
+              <img src="/logo.png" alt="GateOn Logo" className="h-16 w-16 object-cover rounded-full shadow-lg border-2 border-slate-900" />
             </div>
-            <h1 className="text-3xl font-bold text-slate-900 font-display">Welcome back</h1>
-            <p className="mt-2 text-slate-500">
+            <h1 className="text-3xl font-extrabold text-slate-900 font-display drop-shadow-sm">Welcome back</h1>
+            <p className="mt-2 text-slate-700 font-medium drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
               Please enter your details to sign in.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-rose-50 border border-rose-100 text-rose-600 text-sm px-4 py-3 rounded-xl flex items-center gap-2 animate-shake">
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 font-medium text-sm px-4 py-3 rounded-xl flex items-center gap-2 animate-shake shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 shrink-0"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                 {error}
               </div>
@@ -106,7 +80,7 @@ function Login() {
 
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700 ml-1">Email</label>
+                <label className="text-sm font-bold text-slate-900 ml-1 drop-shadow-sm">Email</label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none group-focus-within:text-brand transition-colors">
                     <EmailIcon />
@@ -117,13 +91,13 @@ function Login() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
-                    className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm shadow-sm placeholder:text-slate-400 focus:border-brand focus:ring-1 focus:ring-brand transition-all hover:border-brand/50"
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-slate-300 rounded-xl text-sm font-medium text-slate-900 shadow-inner placeholder:text-slate-500 focus:border-brand focus:ring-1 focus:ring-brand transition-all hover:border-slate-400"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700 ml-1">Password</label>
+                <label className="text-sm font-bold text-slate-900 ml-1 drop-shadow-sm">Password</label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none group-focus-within:text-brand transition-colors">
                     <LockIcon />
@@ -134,18 +108,18 @@ function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm shadow-sm placeholder:text-slate-400 focus:border-brand focus:ring-1 focus:ring-brand transition-all hover:border-brand/50"
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border-2 border-slate-300 rounded-xl text-sm font-medium text-slate-900 shadow-inner placeholder:text-slate-500 focus:border-brand focus:ring-1 focus:ring-brand transition-all hover:border-slate-400"
                   />
                 </div>
               </div>
             </div>
 
             <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 text-slate-600 cursor-pointer select-none group">
-                <input type="checkbox" className="w-4 h-4 rounded text-brand border-slate-300 focus:ring-brand transition-colors cursor-pointer" />
-                <span className="group-hover:text-slate-900 transition-colors">Remember me</span>
+              <label className="flex items-center gap-2 text-slate-700 font-medium cursor-pointer select-none group">
+                <input type="checkbox" className="w-4 h-4 rounded text-brand border-slate-400 focus:ring-brand transition-colors cursor-pointer shadow-sm" />
+                <span className="group-hover:text-slate-900 transition-colors drop-shadow-sm">Remember me</span>
               </label>
-              <Link to="#" className="font-semibold text-brand hover:text-brand-dark transition-colors hover:underline">
+              <Link to="#" className="font-bold text-brand hover:text-brand-dark transition-colors hover:underline drop-shadow-sm">
                 Forgot password?
               </Link>
             </div>
@@ -157,16 +131,16 @@ function Login() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200"></div>
+              <div className="w-full border-t border-slate-300 shadow-[0_1px_0_rgba(255,255,255,0.8)]"></div>
             </div>
-            <div className="relative flex justify-center text-xs uppercase font-medium tracking-wide">
-              <span className="bg-slate-50 px-3 text-slate-400">Or continue with</span>
+            <div className="relative flex justify-center text-xs uppercase font-bold tracking-wide">
+              <span className="bg-white/80 px-3 text-slate-600 drop-shadow-sm">Or continue with</span>
             </div>
           </div>
 
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-2 py-3 bg-white border border-slate-200 rounded-xl text-slate-700 font-semibold text-sm shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:shadow-md transition-all duration-200 group"
+            className="w-full flex items-center justify-center gap-2 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 font-bold text-sm shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:shadow-md transition-all duration-200 group"
           >
             <div className="group-hover:scale-110 transition-transform duration-200">
               <GoogleIcon />
