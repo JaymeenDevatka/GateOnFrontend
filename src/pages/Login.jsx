@@ -54,12 +54,12 @@ function Login() {
 
   return (
     <div className="h-screen w-full flex items-center justify-center text-slate-900 font-sans bg-slate-50 relative overflow-hidden pt-20">
-      <div className="absolute inset-0 bg-[url('/login2.jpg')] bg-cover bg-center contrast-125 brightness-110 saturate-125" />
+      <div className="absolute inset-0 bg-[url('/backgroundimg.png')] bg-cover bg-center contrast-125 brightness-110 saturate-125" />
       <div className="absolute inset-0 bg-black/10" />
 
-      {/* Metallic Gradient Border Wrapper */}
-      <div className="w-full max-w-sm animate-float p-[3px] rounded-3xl bg-gradient-to-br from-slate-900 via-slate-500 to-slate-900 shadow-2xl relative z-10">
-        <div className="w-full h-full bg-gradient-to-br from-white/95 to-slate-100/90 backdrop-blur-md p-6 rounded-[21px] ring-1 ring-inset ring-white/50">
+      {/* Clean Card Wrapper */}
+      <div className="w-full max-w-sm bg-white/95 backdrop-blur-md p-8 rounded-2xl shadow-2xl border border-slate-200 relative z-10">
+        <div className="w-full h-full">
           <div className="text-center">
             <div className="flex justify-center mb-6">
               <img src="/logo.png" alt="GateOn Logo" className="h-16 w-16 object-cover rounded-full shadow-lg border-2 border-slate-900" />

@@ -71,12 +71,12 @@ function Signup() {
 
   return (
     <div className="h-screen w-full flex items-center justify-center text-slate-900 font-sans bg-slate-50 relative overflow-hidden pt-20">
-      <div className="absolute inset-0 bg-[url('/login2.jpg')] bg-cover bg-center contrast-125 brightness-110 saturate-125" />
+      <div className="absolute inset-0 bg-[url('/backgroundimg.png')] bg-cover bg-center contrast-125 brightness-110 saturate-125" />
       <div className="absolute inset-0 bg-black/10" />
 
-      {/* Metallic Gradient Border Wrapper */}
-      <div className="w-full max-w-sm animate-float p-[3px] rounded-3xl bg-gradient-to-br from-slate-900 via-slate-500 to-slate-900 shadow-2xl relative z-10">
-        <div className="w-full h-full bg-gradient-to-br from-white/95 to-slate-100/90 backdrop-blur-md p-6 rounded-[21px] ring-1 ring-inset ring-white/50">
+      {/* Clean Card Wrapper */}
+      <div className="w-full max-w-sm bg-white/95 backdrop-blur-md p-8 rounded-2xl shadow-2xl border border-slate-200 relative z-10">
+        <div className="w-full h-full">
           <div className="text-center">
             <div className="flex justify-center mb-4">
               <img src="/logo.png" alt="GateOn Logo" className="h-16 w-16 object-cover rounded-full shadow-lg border-2 border-slate-900" />
@@ -166,21 +166,7 @@ function Signup() {
             </div>
             <p className="text-xs text-slate-600 font-medium ml-1 drop-shadow-sm">Password must be at least 6 characters</p>
 
-            <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 group hover:border-brand/20 transition-colors shadow-sm">
-              <div className="mt-0.5">
-                <input type="checkbox" required className="relative w-4 h-4 rounded text-brand border-slate-300 focus:ring-brand transition-all cursor-pointer shadow-sm" />
-              </div>
-              <label className="text-xs sm:text-sm text-slate-700 font-medium leading-snug cursor-pointer group-hover:text-slate-900 transition-colors drop-shadow-sm">
-                I agree to the{' '}
-                <Link to="#" className="font-bold text-brand hover:text-brand-dark transition-colors hover:underline">
-                  Terms of Service
-                </Link>{' '}
-                and{' '}
-                <Link to="#" className="font-bold text-brand hover:text-brand-dark transition-colors hover:underline">
-                  Privacy Policy
-                </Link>
-              </label>
-            </div>
+
 
             <Button type="submit" className="w-full py-3.5 text-base font-bold shadow-lg shadow-brand/20 hover:shadow-brand/40 transform hover:-translate-y-0.5 transition-all duration-200">
               Create account
