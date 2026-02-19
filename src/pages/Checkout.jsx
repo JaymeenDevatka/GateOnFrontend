@@ -125,7 +125,7 @@ function Checkout() {
 
   const handlePlaceOrder = async (e) => {
     e?.preventDefault();
-    
+
     // Validation
     if (!attendee.firstName || !attendee.lastName) {
       setError("Please enter your first and last name");
@@ -313,55 +313,63 @@ function Checkout() {
             </div>
 
           </div>
-          <div className="flex flex-wrap gap-2 items-center">
-            <input
-              value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
-              placeholder="Promo code"
-              className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-            <Button type="button" variant="outline" onClick={applyPromo}>
-              Apply
-            </Button>
-            {appliedPromo && !promoError && (
-              <span className="text-xs text-emerald-700">
-                Applied {appliedPromo.code}.
-              </span>
-            )}
-            {promoError && (
-              <span className="text-xs text-rose-700">{promoError}</span>
-            )}
-          </div>
-        </div>
+          {/* RIGHT COLUMN: Order Summary */}
+          <div className="lg:col-span-4 space-y-6">
 
-        <div className="bg-surface-elevated rounded-2xl border border-slate-200/80 shadow-card p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-900">
-                Order total
-              </p>
-              <p className="text-xs text-slate-500 mt-1">
-                This is a demo – no real charges or payment gateway yet.
-              </p>
-            </div>
-            <div className="text-right text-xs text-slate-600">
-              <p>Subtotal: ₹{baseTotal.toLocaleString()}</p>
-              {promoDiscount > 0 && (
-                <p>Promo: -₹{promoDiscount.toLocaleString()}</p>
+            <div className="flex flex-wrap gap-2 items-center">
+              <input
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                placeholder="Promo code"
+                className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+              <Button type="button" variant="outline" onClick={applyPromo}>
+                Apply
+              </Button>
+              {appliedPromo && !promoError && (
+                <span className="text-xs text-emerald-700">
+                  Applied {appliedPromo.code}.
+                </span>
               )}
-              {groupDiscount > 0 && (
-                <p>Group offer: -₹{groupDiscount.toLocaleString()}</p>
+              {promoError && (
+                <span className="text-xs text-rose-700">{promoError}</span>
               )}
-              <p className="mt-1 text-sm font-semibold text-slate-900">
-                Total: {total === 0 ? "Free" : `₹${total.toLocaleString()}`}
-              </p>
             </div>
-          </div>
-        </div>
 
+            {/* Order Summary */}
+            <div className="bg-surface-elevated rounded-2xl border border-slate-200/80 shadow-card p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">
+                    Order total
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    This is a demo – no real charges or payment gateway yet.
+                  </p>
+                </div>
+                <div className="text-right text-xs text-slate-600">
+                  <p>Subtotal: ₹{baseTotal.toLocaleString()}</p>
+                  {promoDiscount > 0 && (
+                    <p>Promo: -₹{promoDiscount.toLocaleString()}</p>
+                  )}
+                  {groupDiscount > 0 && (
+                    <p>Group offer: -₹{groupDiscount.toLocaleString()}</p>
+                  )}
+                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                    Total: {total === 0 ? "Free" : `₹${total.toLocaleString()}`}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div> {/* closes lg:col-span-4 */}
+        </div> {/* closes grid */}
+
+        {/* Place order / confirmation */}
         {!booking ? (
           <div className="flex justify-end">
-            <Button onClick={handlePlaceOrder}>Place order</Button>
+            <Button onClick={handlePlaceOrder} disabled={loading}>
+              {loading ? "Processing..." : "Place order"}
+            </Button>
           </div>
         ) : (
           <div className="bg-surface-elevated rounded-2xl border border-emerald-200/80 shadow-card p-4 space-y-2">
@@ -369,8 +377,9 @@ function Checkout() {
               Booking confirmed
             </p>
             <p className="text-xs text-emerald-700">
-              Your booking ID is <span className="font-mono">{booking.id}</span>
-              . Your ticket is available under My Tickets.
+              Your booking ID is{" "}
+              <span className="font-mono">{booking.id}</span>. Your ticket is
+              available under My Tickets.
             </p>
             <p className="text-xs text-slate-500">
               In a real system, this step would also trigger Email/WhatsApp
@@ -386,9 +395,9 @@ function Checkout() {
               </Button>
             </div>
           </div>
-
-        </div>
+        )}
       </div>
+      {/* END main grid */}
     </div>
   );
 }
