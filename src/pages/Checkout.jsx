@@ -205,7 +205,7 @@ function Checkout() {
             {/* 1. Attendee Details */}
             <div>
               <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-sm">1</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-sm">1</span>
                 Contact Information
               </h2>
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
@@ -259,7 +259,7 @@ function Checkout() {
             {/* 2. Delivery Options */}
             <div>
               <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-sm">2</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-sm">2</span>
                 Delivery Method
               </h2>
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
@@ -286,7 +286,7 @@ function Checkout() {
             {/* 3. Payment */}
             <div>
               <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-sm">3</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-sm">3</span>
                 Payment
               </h2>
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
@@ -321,9 +321,9 @@ function Checkout() {
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value)}
                 placeholder="Promo code"
-                className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand flex-1"
               />
-              <Button type="button" variant="outline" onClick={applyPromo}>
+              <Button type="button" variant="outline" onClick={applyPromo} className="border-brand text-brand hover:bg-brand/10">
                 Apply
               </Button>
               {appliedPromo && !promoError && (
@@ -361,41 +361,47 @@ function Checkout() {
                 </div>
               </div>
             </div>
-          </div> {/* closes lg:col-span-4 */}
+
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-100">
+                {error}
+              </div>
+            )}
+
+            {/* Place order button (Moved here for better UX) */}
+            {!booking ? (
+              <Button
+                onClick={handlePlaceOrder}
+                disabled={loading}
+                className="w-full bg-brand hover:bg-brand-dark text-white shadow-lg shadow-brand/20 py-3 text-lg font-medium"
+              >
+                {loading ? "Processing..." : `Pay ₹${total.toLocaleString()}`}
+              </Button>
+            ) : (
+              <div className="bg-emerald-50 rounded-xl border border-emerald-200 p-4 space-y-2">
+                <div className="flex items-center gap-2 text-emerald-800 font-semibold">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Booking Confirmed
+                </div>
+                <p className="text-sm text-emerald-700">
+                  Booking ID: <span className="font-mono font-bold">{booking.id}</span>
+                </p>
+                <Button
+                  variant="outline"
+                  className="w-full mt-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+                  onClick={() => navigate("/attendee")}
+                >
+                  View Ticket
+                </Button>
+              </div>
+            )}
+          </div>
         </div> {/* closes grid */}
 
-        {/* Place order / confirmation */}
-        {!booking ? (
-          <div className="flex justify-end">
-            <Button onClick={handlePlaceOrder} disabled={loading}>
-              {loading ? "Processing..." : "Place order"}
-            </Button>
-          </div>
-        ) : (
-          <div className="bg-surface-elevated rounded-2xl border border-emerald-200/80 shadow-card p-4 space-y-2">
-            <p className="text-sm font-semibold text-emerald-800">
-              Booking confirmed
-            </p>
-            <p className="text-xs text-emerald-700">
-              Your booking ID is{" "}
-              <span className="font-mono">{booking.id}</span>. Your ticket is
-              available under My Tickets.
-            </p>
-            <p className="text-xs text-slate-500">
-              In a real system, this step would also trigger Email/WhatsApp
-              confirmations and reminders.
-            </p>
-            <div className="flex justify-end gap-2 pt-1">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => navigate("/attendee")}
-              >
-                Go to My Tickets
-              </Button>
-            </div>
-          </div>
-        )}
+
       </div>
       {/* END main grid */}
     </div>

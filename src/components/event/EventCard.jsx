@@ -54,7 +54,7 @@ function EventCard({ event }) {
       <div className="flex-1 flex flex-col p-6 space-y-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-brand mb-2 group-hover:text-brand-dark transition-colors">
-            {event.date}
+            {event.date?.split('T')[0]}
           </p>
           <h3 className="text-xl font-bold text-slate-900 leading-snug group-hover:text-brand transition-colors font-display line-clamp-2">
             {event.title}

@@ -59,15 +59,13 @@ function EventDetails() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
         </div>
         <div className="space-y-3">
-          <p className="text-xs font-medium text-brand">{event.date}</p>
+          <p className="text-xs font-medium text-brand">{event.date?.split('T')[0]}</p>
           <h1 className="text-2xl font-semibold text-slate-900">
             {event.title}
           </h1>
           <p className="text-sm text-slate-600">{event.location}</p>
-          <p className="text-xs text-slate-500">
-            This is a static description in the frontend. In a real app,
-            description, schedule, and organizer details would all come from
-            your backend just like on Eventbrite.
+          <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+            {event.description || "No description provided."}
           </p>
 
           {event.liveLink && (
@@ -84,20 +82,27 @@ function EventDetails() {
             </div>
           )}
 
-          <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-slate-600">
-            <span>Share:</span>
-            <button className="px-2 py-1 rounded-full bg-slate-100 hover:bg-slate-200">
-              WhatsApp
-            </button>
-            <button className="px-2 py-1 rounded-full bg-slate-100 hover:bg-slate-200">
-              Instagram
-            </button>
-            <button className="px-2 py-1 rounded-full bg-slate-100 hover:bg-slate-200">
-              Twitter
-            </button>
-            <button className="px-2 py-1 rounded-full bg-slate-100 hover:bg-slate-200">
-              Facebook
-            </button>
+          <div className="mt-6 flex flex-col gap-3 pt-6 border-t border-slate-100">
+            <h3 className="text-sm font-semibold text-slate-900">Date and Time</h3>
+            <div className="flex items-center gap-3 text-slate-700">
+              <div className="p-2 bg-brand/10 rounded-lg text-brand">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="font-medium">{event.date?.split('T')[0]}</p>
+            </div>
+            {event.location && (
+              <div className="flex items-center gap-3 text-slate-700">
+                <div className="p-2 bg-slate-100 rounded-lg text-slate-600">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <p className="font-medium">{event.location}</p>
+              </div>
+            )}
           </div>
         </div>
       </section>
