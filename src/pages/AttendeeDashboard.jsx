@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 
 function openPrintableTicket({ event, booking, ticketLabel }) {
   const safe = (v) => String(v ?? "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const ticketCode = booking.ticketCode || booking.id;
   const win = window.open("", "_blank");
   if (!win) return;
   win.document.write(`
@@ -42,7 +43,7 @@ function openPrintableTicket({ event, booking, ticketLabel }) {
             <p class="meta">${safe(event.date)} · ${safe(event.location)}</p>
             <hr class="divider" />
             <div class="grid">
-              <div class="field"><label>Booking ID</label><p style="font-family:monospace;font-size:12px;">${safe(booking.id)}</p></div>
+              <div class="field"><label>Ticket Code</label><p style="font-family:monospace;font-size:14px;font-weight:900;color:#6366f1;">${safe(booking.ticketCode || booking.id)}</p></div>
               <div class="field"><label>Ticket Type</label><p>${safe(ticketLabel)}</p></div>
               <div class="field"><label>Attendee</label><p>${safe(booking.attendee?.firstName)} ${safe(booking.attendee?.lastName)}</p></div>
               <div class="field"><label>Email</label><p style="font-size:12px;">${safe(booking.attendee?.email)}</p></div>
@@ -53,9 +54,9 @@ function openPrintableTicket({ event, booking, ticketLabel }) {
             <div class="bottom">
               <div>
                 <span class="badge">✓ Confirmed</span>
-                <p style="font-size:11px;color:#94a3b8;margin-top:8px;">Show this at entry. Valid for one-time use only.</p>
+                <p style="font-size:11px;color:#94a3b8;margin-top:8px;">Show this ticket code at entry. Valid for one-time use only.</p>
               </div>
-              <div class="qr-box">QR<br/>${safe(booking.id).slice(0, 8)}</div>
+              <div class="qr-box">QR<br/>${safe((booking.ticketCode || booking.id).slice(-8))}</div>
             </div>
             <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
           </div>
@@ -84,6 +85,7 @@ function AttendeeDashboard() {
       const ticket = event?.tickets?.find((t) => String(t.id) === String(b.ticketId));
       return {
         id: b.id,
+        ticketCode: b.ticketCode || b.id,
         bookingId: b.id,
         eventId: b.eventId,
         eventTitle: event?.title || "Event",
@@ -114,7 +116,7 @@ function AttendeeDashboard() {
   const handleShareWhatsApp = (t) => {
     const event = t.raw?.event;
     if (!event) return;
-    const text = `🎟️ My ticket for *${event.title}*\n📅 ${event.date}\n📍 ${event.location}\nBooking ID: ${t.bookingId}\n\nBooked via GateOn`;
+    const text = `🎟️ My ticket for *${event.title}*\n📅 ${event.date}\n📍 ${event.location}\n🎫 Ticket Code: ${t.ticketCode}\n\nBooked via GateOn`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -203,15 +205,16 @@ function AttendeeDashboard() {
               {/* Details grid */}
               <div className="grid grid-cols-2 gap-4 border-t border-dashed border-slate-200 pt-4 mb-4">
                 {[
+                  { label: "Ticket Code", value: selected.ticketCode, mono: true, highlight: true },
                   { label: "Ticket Type", value: selected.ticketType },
                   { label: "Quantity", value: selected.quantity || 1 },
-                  { label: "Booking ID", value: String(selected.bookingId).slice(0, 12), mono: true },
                   { label: "Amount Paid", value: `₹${(selected.total || 0).toLocaleString()}` },
                   { label: "Status", value: selected.status },
-                ].map(({ label, value, mono }) => (
+                  { label: "Booking ID", value: String(selected.bookingId).slice(0, 12), mono: true },
+                ].map(({ label, value, mono, highlight }) => (
                   <div key={label}>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</p>
-                    <p className={`text-sm font-bold text-slate-900 mt-0.5 ${mono ? "font-mono text-xs" : ""}`}>{value}</p>
+                    <p className={`text-sm font-bold text-slate-900 mt-0.5 ${mono ? "font-mono text-xs" : ""} ${highlight ? "text-brand" : ""}`}>{value}</p>
                   </div>
                 ))}
               </div>

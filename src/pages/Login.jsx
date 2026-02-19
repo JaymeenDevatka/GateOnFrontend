@@ -1,7 +1,8 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../components/common/Button.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { loginApi } from '../services/api.js';
 
 // Icons
 const EmailIcon = () => (
@@ -29,13 +30,14 @@ function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const { setUserFromApi } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || '/organizer';
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -44,11 +46,20 @@ function Login() {
       return;
     }
 
-    if (email.includes('@') && password.length >= 6) {
-      login(email, password);
-      navigate(from, { replace: true });
-    } else {
+    if (!email.includes('@') || password.length < 6) {
       setError('Invalid email or password. Password must be at least 6 characters.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await loginApi({ email, password });
+      setUserFromApi(data.user);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err?.data?.message || err?.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -124,8 +135,8 @@ function Login() {
               </Link>
             </div>
 
-            <Button type="submit" className="w-full py-3.5 text-base font-bold shadow-lg shadow-brand/20 hover:shadow-brand/40 transform hover:-translate-y-0.5 transition-all duration-200">
-              Sign in
+            <Button type="submit" disabled={loading} className="w-full py-3.5 text-base font-bold shadow-lg shadow-brand/20 hover:shadow-brand/40 transform hover:-translate-y-0.5 transition-all duration-200">
+              {loading ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>
 

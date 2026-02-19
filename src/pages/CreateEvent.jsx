@@ -8,7 +8,7 @@ import TimePicker from "../components/common/TimePicker.jsx";
 
 function CreateEvent() {
   const { createEvent } = useEventContext();
-  const { user } = useAuth();
+  const { user, setUserFromApi } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     title: "",
@@ -83,9 +83,12 @@ function CreateEvent() {
       venueType,
       trending: false,
       rating: 0,
-      ownerId: user?.id || "user-1",
+      ownerId: user?.id ?? null,
       tickets: normalizedTickets,
     });
+    if (user) {
+      setUserFromApi({ ...user, role: "EventManager" });
+    }
     navigate("/organizer");
   };
 

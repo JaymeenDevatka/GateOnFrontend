@@ -60,7 +60,7 @@ function App() {
           <Route
             path="/create-event"
             element={
-              <Guard requireAuth roles={["Admin", "Event Manager"]}>
+              <Guard requireAuth>
                 <CreateEvent />
               </Guard>
             }
@@ -76,7 +76,7 @@ function App() {
           <Route
             path="/organizer"
             element={
-              <Guard requireAuth roles={["Admin", "Event Manager"]}>
+              <Guard requireAuth roles={["Admin", "EventManager"]}>
                 <OrganizerDashboard />
               </Guard>
             }
@@ -94,7 +94,7 @@ function App() {
             element={
               <Guard
                 requireAuth
-                roles={["Admin", "Event Manager", "Volunteer"]}
+                roles={["Admin", "EventManager", "Volunteer"]}
               >
                 <CheckIn />
               </Guard>

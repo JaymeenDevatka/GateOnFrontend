@@ -13,7 +13,7 @@ import {
 const BookingContext = createContext(null);
 
 export function BookingProvider({ children }) {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [promoCodes, setPromoCodes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +36,7 @@ export function BookingProvider({ children }) {
 
     return {
       id: b.id,
+      ticketCode: b.ticketCode || b.id,
       userId: b.userId,
       eventId: String(b.eventId),
       ticketId: String(b.ticketId),
@@ -179,10 +180,25 @@ export function BookingProvider({ children }) {
     promoCode,
     delivery,
   }) => {
-    if (!user)
-      return Promise.resolve({ ok: false, error: "You must be logged in." });
-    if (!event || !ticket)
+    // Get current user value (not from closure)
+    const currentUser = user;
+    const currentIsAuthenticated = isAuthenticated();
+    
+    console.log("createBooking called - User check:", { 
+      currentUser, 
+      currentIsAuthenticated,
+      hasUserId: !!currentUser?.id 
+    });
+    
+    if (!currentIsAuthenticated || !currentUser || !currentUser.id) {
+      return Promise.resolve({ 
+        ok: false, 
+        error: "You must be logged in to create a booking. Please log in and try again." 
+      });
+    }
+    if (!event || !ticket) {
       return Promise.resolve({ ok: false, error: "Missing event/ticket." });
+    }
 
     const qty = Math.max(1, Math.min(5, Number(quantity) || 1));
     const fullName =
@@ -191,14 +207,15 @@ export function BookingProvider({ children }) {
 
     return (async () => {
       try {
+        console.log("Calling createBookingApi with userId:", currentUser.id);
         const created = await createBookingApi({
           eventId: String(event.id),
           ticketId: String(ticket.id),
           quantity: qty,
-          userId: user.id,
+          userId: currentUser.id,
           attendee: {
-            name: fullName || user.name || "Attendee",
-            email: attendee?.email || user.email || "",
+            name: fullName || currentUser.name || "Attendee",
+            email: attendee?.email || currentUser.email || "",
             phone: attendee?.phone || "",
             location: "",
           },
@@ -210,7 +227,9 @@ export function BookingProvider({ children }) {
         setBookings((prev) => [mapped, ...prev]);
         return { ok: true, booking: mapped };
       } catch (e) {
-        return { ok: false, error: e?.message || "Unable to create booking." };
+        console.error("Booking creation error:", e);
+        const errorMsg = e?.data?.message || e?.message || "Unable to create booking.";
+        return { ok: false, error: errorMsg };
       }
     })();
   };
@@ -272,7 +291,7 @@ export function BookingProvider({ children }) {
       getTicketSoldCount,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [bookings, promoCodes, loading, error],
+    [bookings, promoCodes, loading, error, user],
   );
 
   return (

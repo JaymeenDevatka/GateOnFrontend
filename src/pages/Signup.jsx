@@ -1,7 +1,8 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../components/common/Button.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { signupApi } from '../services/api.js';
 
 // Icons
 const UserIcon = () => (
@@ -30,18 +31,19 @@ function Signup() {
     confirmPassword: ''
   });
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const { setUserFromApi } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || '/organizer';
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -65,8 +67,20 @@ function Signup() {
       return;
     }
 
-    login(form.email, form.password, form.name);
-    navigate(from, { replace: true });
+    setLoading(true);
+    try {
+      const data = await signupApi({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      });
+      setUserFromApi(data.user);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err?.data?.message || err?.message || 'Sign up failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -182,8 +196,8 @@ function Signup() {
               </label>
             </div>
 
-            <Button type="submit" className="w-full py-3.5 text-base font-bold shadow-lg shadow-brand/20 hover:shadow-brand/40 transform hover:-translate-y-0.5 transition-all duration-200">
-              Create account
+            <Button type="submit" disabled={loading} className="w-full py-3.5 text-base font-bold shadow-lg shadow-brand/20 hover:shadow-brand/40 transform hover:-translate-y-0.5 transition-all duration-200">
+              {loading ? 'Creating account…' : 'Create account'}
             </Button>
           </form>
 

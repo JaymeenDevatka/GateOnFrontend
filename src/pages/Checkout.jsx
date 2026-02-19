@@ -3,12 +3,14 @@ import { useState } from "react";
 import Button from "../components/common/Button.jsx";
 import { useEventContext } from "../context/EventContext.jsx";
 import { useBookingContext } from "../context/BookingContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { getEventById } = useEventContext();
   const { findPromo, createBooking } = useBookingContext();
+  const { user, isAuthenticated } = useAuth();
   const eventId = location.state?.eventId;
   const ticketId = location.state?.ticketId;
   const quantity = location.state?.quantity ?? 1;
@@ -21,6 +23,8 @@ function Checkout() {
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [promoError, setPromoError] = useState("");
   const [booking, setBooking] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [attendee, setAttendee] = useState({
     firstName: "",
@@ -32,10 +36,29 @@ function Checkout() {
   const [delivery, setDelivery] = useState({ email: true, whatsapp: false });
   const [paymentMethod, setPaymentMethod] = useState("upi");
 
+  if (!isAuthenticated()) {
+    return (
+      <div className="container-page py-10">
+        <p className="text-sm text-slate-500">Please log in to complete checkout.</p>
+        <Button onClick={() => navigate("/login", { state: { from: location } })} className="mt-4">
+          Log In
+        </Button>
+      </div>
+    );
+  }
+
+  // Debug: Log user state
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('Checkout - User state:', { user, isAuthenticated: isAuthenticated() });
+  }
+
   if (!event || !ticket) {
     return (
       <div className="container-page py-10">
         <p className="text-sm text-slate-500">No checkout session found.</p>
+        <Button onClick={() => navigate("/events")} className="mt-4">
+          Browse Events
+        </Button>
       </div>
     );
   }
@@ -67,17 +90,54 @@ function Checkout() {
     setAppliedPromo({ code: found.code });
   };
 
-  const handlePlaceOrder = async () => {
-    const result = await createBooking({
-      event,
-      ticket: { id: ticket.id, price: unitPrice },
-      quantity,
-      attendee,
-      promoCode: appliedPromo?.code || null,
-      delivery,
-    });
+  const handlePlaceOrder = async (e) => {
+    e?.preventDefault();
+    
+    // Validation
+    if (!attendee.firstName || !attendee.lastName) {
+      setError("Please enter your first and last name");
+      return;
+    }
+    if (!attendee.email || !attendee.email.includes("@")) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    if (!isAuthenticated() || !user || !user.id) {
+      setError("You must be logged in to place an order. Please log in and try again.");
+      console.error("User not authenticated:", { user, isAuthenticated: isAuthenticated() });
+      setTimeout(() => {
+        navigate("/login", { state: { from: location } });
+      }, 2000);
+      return;
+    }
 
-    if (result.ok) setBooking(result.booking);
+    setLoading(true);
+    setError("");
+
+    try {
+      console.log("Creating booking with user:", user);
+      const result = await createBooking({
+        event,
+        ticket: { id: ticket.id, price: unitPrice },
+        quantity,
+        attendee,
+        promoCode: appliedPromo?.code || null,
+        delivery,
+      });
+
+      if (result.ok) {
+        setBooking(result.booking);
+      } else {
+        setError(result.error || "Failed to create booking. Please try again.");
+        console.error("Booking error:", result.error);
+      }
+    } catch (err) {
+      const errorMsg = err?.message || err?.data?.message || "An error occurred. Please try again.";
+      setError(errorMsg);
+      console.error("Booking exception:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -255,8 +315,18 @@ function Checkout() {
         </div>
 
         {!booking ? (
-          <div className="flex justify-end">
-            <Button onClick={handlePlaceOrder}>Place order</Button>
+          <div className="space-y-3">
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                <p className="font-semibold">Error</p>
+                <p>{error}</p>
+              </div>
+            )}
+            <div className="flex justify-end">
+              <Button onClick={handlePlaceOrder} disabled={loading || !user}>
+                {loading ? "Processing..." : "Place order"}
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="bg-surface-elevated rounded-2xl border border-emerald-200/80 shadow-card p-4 space-y-2">
@@ -264,10 +334,12 @@ function Checkout() {
               Booking confirmed
             </p>
             <p className="text-xs text-emerald-700">
-              Your booking ID is <span className="font-mono">{booking.id}</span>
-              . Your ticket is available under My Tickets.
+              Your ticket code is <span className="font-mono font-bold text-base text-emerald-900">{booking.ticketCode || booking.id}</span>
             </p>
             <p className="text-xs text-slate-500">
+              Your ticket is available under My Tickets. Show this code at the event entrance.
+            </p>
+            <p className="text-xs text-slate-400">
               In a real system, this step would also trigger Email/WhatsApp
               confirmations and reminders.
             </p>
