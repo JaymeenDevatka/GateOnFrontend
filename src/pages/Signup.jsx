@@ -30,7 +30,7 @@ function Signup() {
     confirmPassword: ''
   });
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { signup } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -41,7 +41,7 @@ function Signup() {
     setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -65,8 +65,12 @@ function Signup() {
       return;
     }
 
-    login(form.email, form.password, form.name);
-    navigate(from, { replace: true });
+    try {
+      await signup(form.name, form.email, form.password);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err.message || 'Signup failed. Please try again.');
+    }
   };
 
   return (

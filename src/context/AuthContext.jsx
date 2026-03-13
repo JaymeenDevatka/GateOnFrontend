@@ -1,4 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { loginApi, signupApi } from "../services/api";
+
 
 const AuthContext = createContext(null);
 
@@ -21,15 +23,24 @@ export function AuthProvider({ children }) {
     safeJsonParse(localStorage.getItem(`${STORAGE_KEY}.role`), "Admin"),
   );
 
-  const login = (email, password, name = null) => {
-    // In real app, this would validate credentials with backend
-    // Single user can access both organizer and attendee features
-    setUser({
-      id: "user-1",
-      name: name || email.split("@")[0], // Use provided name or email prefix as name for demo
-      email,
-    });
-    setRole((prev) => prev || "Admin");
+  const login = async (email, password) => {
+    try {
+      const data = await loginApi({ email, password });
+      setUser(data.user);
+      setRole(data.user.role || "Attendee");
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const signup = async (name, email, password) => {
+    try {
+      const data = await signupApi({ name, email, password });
+      setUser(data.user);
+      setRole(data.user.role || "Attendee");
+    } catch (err) {
+      throw err;
+    }
   };
 
   const loginAs = (role) => {
@@ -73,6 +84,7 @@ export function AuthProvider({ children }) {
       role,
       setRole,
       login,
+      signup,
       loginAs,
       logout,
       isAuthenticated,

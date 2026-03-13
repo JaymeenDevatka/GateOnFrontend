@@ -35,7 +35,7 @@ function Login() {
 
   const from = location.state?.from?.pathname || '/';
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -44,11 +44,16 @@ function Login() {
       return;
     }
 
-    if (email.includes('@') && password.length >= 6) {
-      login(email, password);
-      navigate(from, { replace: true });
-    } else {
+    if (!email.includes('@') || password.length < 6) {
       setError('Invalid email or password. Password must be at least 6 characters.');
+      return;
+    }
+
+    try {
+      await login(email, password);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err.message || 'Login failed. Please check your credentials.');
     }
   };
 
