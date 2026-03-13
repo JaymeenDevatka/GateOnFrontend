@@ -3,7 +3,7 @@ import { useState } from "react";
 import Button from "../components/common/Button.jsx";
 import { useEventContext } from "../context/EventContext.jsx";
 import { useBookingContext } from "../context/BookingContext.jsx";
-
+import { useAuth } from "../context/AuthContext.jsx";
 // Icons
 const TicketIcon = () => (
   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -35,12 +35,13 @@ const CreditCardIcon = () => (
   </svg>
 );
 
+
 function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { getEventById } = useEventContext();
   const { findPromo, createBooking } = useBookingContext();
-
+  const { user, isAuthenticated } = useAuth();
   const eventId = location.state?.eventId;
   const ticketId = location.state?.ticketId;
   const quantity = location.state?.quantity ?? 1;
@@ -55,6 +56,8 @@ function Checkout() {
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [promoError, setPromoError] = useState("");
   const [booking, setBooking] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [attendee, setAttendee] = useState({
     firstName: "",
@@ -66,15 +69,29 @@ function Checkout() {
   const [delivery, setDelivery] = useState({ email: true, whatsapp: false });
   const [paymentMethod, setPaymentMethod] = useState("upi");
 
+  if (!isAuthenticated()) {
+    return (
+      <div className="container-page py-10">
+        <p className="text-sm text-slate-500">Please log in to complete checkout.</p>
+        <Button onClick={() => navigate("/login", { state: { from: location } })} className="mt-4">
+          Log In
+        </Button>
+      </div>
+    );
+  }
+
+  // Debug: Log user state
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('Checkout - User state:', { user, isAuthenticated: isAuthenticated() });
+  }
+
   if (!event || !ticket) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/backgroundimg.png')] bg-cover bg-center contrast-125 brightness-110 saturate-125 opacity-20" />
-        <div className="z-10 bg-white/80 backdrop-blur-xl p-8 rounded-2xl border border-slate-200 shadow-xl text-center">
-          <p className="text-lg font-bold text-slate-800">Session Expired</p>
-          <p className="text-slate-500 mb-4">Please select a ticket again.</p>
-          <Button onClick={() => navigate("/")}>Browse Events</Button>
-        </div>
+      <div className="container-page py-10">
+        <p className="text-sm text-slate-500">No checkout session found.</p>
+        <Button onClick={() => navigate("/events")} className="mt-4">
+          Browse Events
+        </Button>
       </div>
     );
   }
@@ -106,17 +123,54 @@ function Checkout() {
     setAppliedPromo({ code: found.code });
   };
 
-  const handlePlaceOrder = async () => {
-    const result = await createBooking({
-      event,
-      ticket: { id: ticket.id, price: unitPrice },
-      quantity,
-      attendee,
-      promoCode: appliedPromo?.code || null,
-      delivery,
-    });
+  const handlePlaceOrder = async (e) => {
+    e?.preventDefault();
 
-    if (result.ok) setBooking(result.booking);
+    // Validation
+    if (!attendee.firstName || !attendee.lastName) {
+      setError("Please enter your first and last name");
+      return;
+    }
+    if (!attendee.email || !attendee.email.includes("@")) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    if (!isAuthenticated() || !user || !user.id) {
+      setError("You must be logged in to place an order. Please log in and try again.");
+      console.error("User not authenticated:", { user, isAuthenticated: isAuthenticated() });
+      setTimeout(() => {
+        navigate("/login", { state: { from: location } });
+      }, 2000);
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      console.log("Creating booking with user:", user);
+      const result = await createBooking({
+        event,
+        ticket: { id: ticket.id, price: unitPrice },
+        quantity,
+        attendee,
+        promoCode: appliedPromo?.code || null,
+        delivery,
+      });
+
+      if (result.ok) {
+        setBooking(result.booking);
+      } else {
+        setError(result.error || "Failed to create booking. Please try again.");
+        console.error("Booking error:", result.error);
+      }
+    } catch (err) {
+      const errorMsg = err?.message || err?.data?.message || "An error occurred. Please try again.";
+      setError(errorMsg);
+      console.error("Booking exception:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -151,7 +205,7 @@ function Checkout() {
             {/* 1. Attendee Details */}
             <div>
               <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-sm">1</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-sm">1</span>
                 Contact Information
               </h2>
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
@@ -205,7 +259,7 @@ function Checkout() {
             {/* 2. Delivery Options */}
             <div>
               <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-sm">2</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-sm">2</span>
                 Delivery Method
               </h2>
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
@@ -232,7 +286,7 @@ function Checkout() {
             {/* 3. Payment */}
             <div>
               <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 text-sm">3</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-sm">3</span>
                 Payment
               </h2>
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
@@ -259,98 +313,97 @@ function Checkout() {
             </div>
 
           </div>
+          {/* RIGHT COLUMN: Order Summary */}
+          <div className="lg:col-span-4 space-y-6">
 
-          {/* RIGHT COLUMN: Order Summary (Sticky) */}
-          <div className="lg:col-span-4">
-            <div className="sticky top-8 space-y-6">
+            <div className="flex flex-wrap gap-2 items-center">
+              <input
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                placeholder="Promo code"
+                className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand flex-1"
+              />
+              <Button type="button" variant="outline" onClick={applyPromo} className="border-brand text-brand hover:bg-brand/10">
+                Apply
+              </Button>
+              {appliedPromo && !promoError && (
+                <span className="text-xs text-emerald-700">
+                  Applied {appliedPromo.code}.
+                </span>
+              )}
+              {promoError && (
+                <span className="text-xs text-rose-700">{promoError}</span>
+              )}
+            </div>
 
-              {/* Ticket Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-                  <h3 className="text-lg font-bold text-slate-900 leading-tight">{event.title}</h3>
-                  <p className="text-sm text-slate-500 mt-1">{event.date}</p>
-                  <p className="text-sm text-slate-500">{event.location}</p>
+            {/* Order Summary */}
+            <div className="bg-surface-elevated rounded-2xl border border-slate-200/80 shadow-card p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">
+                    Order total
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    This is a demo – no real charges or payment gateway yet.
+                  </p>
                 </div>
-
-                <div className="p-6 space-y-4">
-                  {/* Ticket Details removed per user request */}
-
+                <div className="text-right text-xs text-slate-600">
+                  <p>Subtotal: ₹{baseTotal.toLocaleString()}</p>
                   {promoDiscount > 0 && (
-                    <div className="flex justify-between text-sm text-emerald-600">
-                      <span>Promo Discount</span>
-                      <span>-₹{promoDiscount.toLocaleString()}</span>
-                    </div>
+                    <p>Promo: -₹{promoDiscount.toLocaleString()}</p>
                   )}
                   {groupDiscount > 0 && (
-                    <div className="flex justify-between text-sm text-emerald-600">
-                      <span>Group Offer</span>
-                      <span>-₹{groupDiscount.toLocaleString()}</span>
-                    </div>
+                    <p>Group offer: -₹{groupDiscount.toLocaleString()}</p>
                   )}
-
-                  <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
-                    <span className="font-bold text-slate-900">Total</span>
-                    <span className="font-bold text-2xl text-slate-900">{total === 0 ? "Free" : `₹${total.toLocaleString()}`}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Promo Code */}
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                <div className="flex gap-2">
-                  <input
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    placeholder="Promo code"
-                    className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:border-brand focus:ring-1 focus:ring-brand outline-none uppercase placeholder:normal-case placeholder:text-slate-400"
-                  />
-                  <Button variant="outline" size="sm" onClick={applyPromo} className="bg-white hover:bg-slate-50 border-slate-300 text-slate-700">Apply</Button>
-                </div>
-                {appliedPromo && !promoError && (
-                  <p className="text-xs text-emerald-600 font-medium mt-2">
-                    Code <strong>{appliedPromo.code}</strong> applied successfully!
+                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                    Total: {total === 0 ? "Free" : `₹${total.toLocaleString()}`}
                   </p>
-                )}
-                {promoError && (
-                  <p className="text-xs text-rose-600 font-medium mt-2">{promoError}</p>
-                )}
-              </div>
-
-              {/* Action Button */}
-              {!booking ? (
-                <Button
-                  onClick={handlePlaceOrder}
-                  className="w-full py-3.5 text-base font-bold shadow-sm"
-                >
-                  Place Order
-                </Button>
-              ) : (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 text-center space-y-4">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto text-emerald-600 mb-2">
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-emerald-900 text-lg">Booking Confirmed!</h4>
-                    <p className="text-emerald-700 text-sm mt-1">Your tickets have been sent to your email.</p>
-                  </div>
-                  <div className="py-2 px-4 bg-emerald-100/50 rounded-lg inline-block">
-                    <p className="text-sm text-emerald-800">ID: <span className="font-mono font-bold">{booking.id}</span></p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="w-full border-emerald-300 text-emerald-700 hover:bg-emerald-100 bg-white"
-                    onClick={() => navigate("/attendee")}
-                  >
-                    View Tickets
-                  </Button>
                 </div>
-              )}
-
+              </div>
             </div>
-          </div>
 
-        </div>
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-100">
+                {error}
+              </div>
+            )}
+
+            {/* Place order button (Moved here for better UX) */}
+            {!booking ? (
+              <Button
+                onClick={handlePlaceOrder}
+                disabled={loading}
+                className="w-full bg-brand hover:bg-brand-dark text-white shadow-lg shadow-brand/20 py-3 text-lg font-medium"
+              >
+                {loading ? "Processing..." : `Pay ₹${total.toLocaleString()}`}
+              </Button>
+            ) : (
+              <div className="bg-emerald-50 rounded-xl border border-emerald-200 p-4 space-y-2">
+                <div className="flex items-center gap-2 text-emerald-800 font-semibold">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Booking Confirmed
+                </div>
+                <p className="text-sm text-emerald-700">
+                  Booking ID: <span className="font-mono font-bold">{booking.id}</span>
+                </p>
+                <Button
+                  variant="outline"
+                  className="w-full mt-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+                  onClick={() => navigate("/attendee")}
+                >
+                  View Ticket
+                </Button>
+              </div>
+            )}
+          </div>
+        </div> {/* closes grid */}
+
+
       </div>
+      {/* END main grid */}
     </div>
   );
 }

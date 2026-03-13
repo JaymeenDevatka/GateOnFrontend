@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { createEventApi, fetchEvents } from "../services/api.js";
+import { createEventApi, updateEventApi, fetchEvents } from "../services/api.js";
 
 const EventContext = createContext(null);
 
@@ -39,6 +39,7 @@ export function EventProvider({ children }) {
   };
 
   const createEvent = async (data) => {
+    const ownerId = data.ownerId || null;
     const payload = {
       title: data.title,
       description: data.description || "",
@@ -51,19 +52,41 @@ export function EventProvider({ children }) {
       trending: Boolean(data.trending),
       rating: Number(data.rating) || 0,
       status: data.status || "published",
-      ownerId: data.ownerId || "u_local",
+      ownerId,
       tickets: normalizeTicketsForApi(data.tickets || []),
     };
 
-    const created = await createEventApi(payload);
+    const created = await createEventApi(payload, ownerId);
     setEvents((prev) => [created, ...prev]);
     return created;
+  };
+
+  const updateEvent = async (eventId, data, userId) => {
+    if (!userId) throw new Error("User ID required");
+    const payload = {
+      title: data.title,
+      description: data.description || "",
+      date: data.date,
+      location: data.location,
+      venue: data.venue || "",
+      venueType: data.venueType || "",
+      category: data.category || "",
+      sportType: data.sportType || "",
+      trending: Boolean(data.trending),
+      rating: Number(data.rating) || 0,
+      status: data.status || "published",
+      tickets: normalizeTicketsForApi(data.tickets || []),
+    };
+
+    const updated = await updateEventApi(eventId, payload, userId);
+    setEvents((prev) => prev.map((e) => (String(e.id) === String(eventId) ? updated : e)));
+    return updated;
   };
 
   const getEventById = (id) => events.find((e) => String(e.id) === String(id));
 
   const value = useMemo(
-    () => ({ events, loading, error, createEvent, getEventById }),
+    () => ({ events, loading, error, createEvent, updateEvent, getEventById }),
     [events, loading, error],
   );
 

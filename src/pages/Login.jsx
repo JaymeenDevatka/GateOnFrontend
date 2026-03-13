@@ -1,7 +1,8 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../components/common/Button.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { loginApi } from '../services/api.js';
 
 // Icons
 const EmailIcon = () => (
@@ -29,11 +30,12 @@ function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const { setUserFromApi } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || '/organizer';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -49,11 +51,15 @@ function Login() {
       return;
     }
 
+    setLoading(true);
     try {
-      await login(email, password);
+      const data = await loginApi({ email, password });
+      setUserFromApi(data.user);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError(err?.data?.message || err?.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -129,12 +135,12 @@ function Login() {
               </Link>
             </div>
 
-            <Button type="submit" className="w-full py-3.5 text-base font-bold shadow-lg shadow-brand/20 hover:shadow-brand/40 transform hover:-translate-y-0.5 transition-all duration-200">
-              Sign in
+            <Button type="submit" disabled={loading} className="w-full py-3.5 text-base font-bold shadow-lg shadow-brand/20 hover:shadow-brand/40 transform hover:-translate-y-0.5 transition-all duration-200">
+              {loading ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>
 
-          <div className="relative">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-300 shadow-[0_1px_0_rgba(255,255,255,0.8)]"></div>
             </div>
@@ -145,6 +151,7 @@ function Login() {
 
           <button
             type="button"
+            onClick={() => window.location.href = "http://localhost:3000/api/auth/google"}
             className="w-full flex items-center justify-center gap-2 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 font-bold text-sm shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:shadow-md transition-all duration-200 group"
           >
             <div className="group-hover:scale-110 transition-transform duration-200">
@@ -153,7 +160,7 @@ function Login() {
             Sign in with Google
           </button>
 
-          <p className="text-center text-sm text-slate-500">
+          <p className="text-center text-sm text-slate-500 mt-6">
             Don't have an account?{' '}
             <Link to="/signup" state={{ from: location.state?.from }} className="font-bold text-brand hover:text-brand-dark transition-colors hover:underline">
               Create an account

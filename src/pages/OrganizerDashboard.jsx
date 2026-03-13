@@ -1,8 +1,11 @@
 import { useEventContext } from "../context/EventContext.jsx";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useBookingContext } from "../context/BookingContext.jsx";
 import { useMemo, useState } from "react";
+import DateRangePicker from "../components/common/DateRangePicker.jsx";
+import TimePicker from "../components/common/TimePicker.jsx";
+import Button from "../components/common/Button.jsx";
 
 function downloadTextFile({ filename, content, mime = "text/plain;charset=utf-8" }) {
   const blob = new Blob([content], { type: mime });
@@ -55,13 +58,18 @@ function Badge({ children, color = "slate" }) {
 }
 
 function OrganizerDashboard() {
-  const { events } = useEventContext();
+  const { events, updateEvent } = useEventContext();
   const { user } = useAuth();
   const { bookings, addPromoCode, removePromoCode, promoCodes } = useBookingContext();
+  const navigate = useNavigate();
   const [exportEventId, setExportEventId] = useState("");
   const [promoForm, setPromoForm] = useState({ code: "", type: "PERCENT", value: 20 });
   const [promoError, setPromoError] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
+  const [editingEvent, setEditingEvent] = useState(null);
+  const [editForm, setEditForm] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState("");
 
   const myEvents = useMemo(() => {
     if (!user) return [];
@@ -103,6 +111,59 @@ function OrganizerDashboard() {
     const res = await addPromoCode({ code: promoForm.code, type: promoForm.type, value: Number(promoForm.value) });
     if (!res.ok) { setPromoError(res.error || "Unable to add promo code."); return; }
     setPromoForm((prev) => ({ ...prev, code: "" }));
+  };
+
+  const updateEditForm = (field, value) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateEditTicket = (id, field, value) => {
+    setEditForm((prev) => ({
+      ...prev,
+      tickets: prev.tickets.map((t) => (t.id === id ? { ...t, [field]: value } : t)),
+    }));
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingEvent || !user) return;
+    setEditLoading(true);
+    setEditError("");
+    try {
+      const startDateTime = `${editForm.startDate}T${editForm.startTime}`;
+      const isOnline = editForm.locationType === "online";
+      const venueType =
+        editForm.locationType === "online" ? "Online" :
+          editForm.locationType === "tba" ? "To be announced" : "In person";
+      const minTicketPrice = editForm.tickets.length
+        ? Math.min(...editForm.tickets.map((t) => Number(t.price) || 0))
+        : Number(editForm.price) || 0;
+      await updateEvent(editingEvent.id, {
+        title: editForm.title,
+        description: editForm.description,
+        date: startDateTime,
+        location: editForm.location,
+        venue: editForm.location,
+        venueType,
+        category: editForm.category,
+        sportType: "",
+        trending: false,
+        rating: 0,
+        status: editForm.status,
+        price: minTicketPrice,
+        tickets: editForm.tickets.map((t) => ({
+          name: t.label || t.name,
+          price: Number(t.price) || 0,
+          capacity: Number(t.maxQuantity ?? t.capacity) || 0,
+        })),
+      }, user.id);
+      setEditingEvent(null);
+      setEditForm(null);
+    } catch (err) {
+      setEditError(err?.message || "Failed to update event");
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   const tabs = [
@@ -315,6 +376,7 @@ function OrganizerDashboard() {
                     <th className="text-right text-xs font-bold text-slate-500 uppercase tracking-wider px-4 py-3">Bookings</th>
                     <th className="text-right text-xs font-bold text-slate-500 uppercase tracking-wider px-4 py-3">Revenue</th>
                     <th className="text-right text-xs font-bold text-slate-500 uppercase tracking-wider px-6 py-3">Status</th>
+                    <th className="text-right text-xs font-bold text-slate-500 uppercase tracking-wider px-6 py-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -343,12 +405,49 @@ function OrganizerDashboard() {
                             {e.status === "published" ? "Live" : "Draft"}
                           </Badge>
                         </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() => {
+                              const date = e.date ? new Date(e.date) : new Date();
+                              const startDate = date.toISOString().split('T')[0];
+                              const startTime = date.toTimeString().slice(0, 5);
+                              setEditForm({
+                                title: e.title,
+                                description: e.description || "",
+                                startDate,
+                                startTime,
+                                endDate: startDate,
+                                endTime: startTime,
+                                location: e.location || "",
+                                locationType: e.venueType === "Online" ? "online" : e.venueType === "To be announced" ? "tba" : "venue",
+                                category: e.category || "Tech",
+                                price: e.price || 0,
+                                status: e.status || "published",
+                                liveLink: "",
+                                tickets: e.tickets?.map((t) => ({
+                                  id: String(t.id),
+                                  label: t.name || t.label || "General",
+                                  price: t.price || 0,
+                                  maxQuantity: t.capacity || t.maxQuantity || 100,
+                                })) || [{ id: "general", label: "General", price: e.price || 0, maxQuantity: 100 }],
+                              });
+                              setEditingEvent(e);
+                              setEditError("");
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Edit
+                          </button>
+                        </td>
                       </tr>
                     );
                   })}
                   {!myEvents.length && (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-500">
+                      <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-500">
                         No events yet. <Link to="/create-event" className="text-brand font-bold hover:underline">Create one →</Link>
                       </td>
                     </tr>
@@ -449,6 +548,125 @@ function OrganizerDashboard() {
           </div>
         )}
       </div>
+
+      {/* Edit Event Modal */}
+      {editingEvent && editForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => { setEditingEvent(null); setEditForm(null); }}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-slate-200">
+              <h2 className="text-xl font-bold text-slate-900">Edit Event</h2>
+              <p className="text-sm text-slate-500 mt-1">{editingEvent.title}</p>
+            </div>
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-6">
+              {editError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">{editError}</div>
+              )}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Event Title</label>
+                  <input
+                    required
+                    value={editForm.title}
+                    onChange={(e) => updateEditForm("title", e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Category</label>
+                  <select
+                    value={editForm.category}
+                    onChange={(e) => updateEditForm("category", e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+                  >
+                    <option value="Tech">Tech</option>
+                    <option value="Music">Music</option>
+                    <option value="Business">Business</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Art">Art</option>
+                    <option value="Food">Food & Drink</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Description</label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => updateEditForm("description", e.target.value)}
+                  rows={4}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand resize-y"
+                />
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Date</label>
+                  <DateRangePicker
+                    startDate={editForm.startDate}
+                    endDate={editForm.endDate}
+                    onStartChange={(v) => updateEditForm("startDate", v)}
+                    onEndChange={(v) => updateEditForm("endDate", v)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <TimePicker
+                    label="Start time"
+                    value={editForm.startTime}
+                    onChange={(v) => updateEditForm("startTime", v)}
+                  />
+                  <TimePicker
+                    label="End time"
+                    value={editForm.endTime}
+                    onChange={(v) => updateEditForm("endTime", v)}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Location</label>
+                <input
+                  value={editForm.location}
+                  onChange={(e) => updateEditForm("location", e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+                />
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Status</label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => updateEditForm("status", e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Price (₹)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.price}
+                    onChange={(e) => updateEditForm("price", Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button type="submit" disabled={editLoading} className="flex-1">
+                  {editLoading ? "Saving..." : "Save Changes"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => { setEditingEvent(null); setEditForm(null); }}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

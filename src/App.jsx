@@ -11,6 +11,7 @@ import AttendeeDashboard from "./pages/AttendeeDashboard.jsx";
 import CheckIn from "./pages/CheckIn.jsx";
 import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
+import GoogleCallback from "./pages/GoogleCallback.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 
 function Guard({ children, requireAuth = false, roles = [] }) {
@@ -45,7 +46,7 @@ function Guard({ children, requireAuth = false, roles = [] }) {
 
 function App() {
   const location = useLocation();
-  const isAuthPage = ['/login', '/signup'].includes(location.pathname);
+  const isAuthPage = ['/login', '/signup', '/auth/callback'].includes(location.pathname);
 
   return (
     <div className="min-h-screen flex flex-col bg-surface">
@@ -55,12 +56,13 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/auth/callback" element={<GoogleCallback />} />
           <Route path="/events" element={<Events />} />
           <Route path="/events/:id" element={<EventDetails />} />
           <Route
             path="/create-event"
             element={
-              <Guard requireAuth roles={["Admin", "Event Manager"]}>
+              <Guard requireAuth>
                 <CreateEvent />
               </Guard>
             }
@@ -76,7 +78,7 @@ function App() {
           <Route
             path="/organizer"
             element={
-              <Guard requireAuth roles={["Admin", "Event Manager"]}>
+              <Guard requireAuth roles={["Admin", "EventManager"]}>
                 <OrganizerDashboard />
               </Guard>
             }
@@ -94,7 +96,7 @@ function App() {
             element={
               <Guard
                 requireAuth
-                roles={["Admin", "Event Manager", "Volunteer"]}
+                roles={["Admin", "EventManager", "Volunteer"]}
               >
                 <CheckIn />
               </Guard>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import Button from "../components/common/Button.jsx";
 import { useBookingContext } from "../context/BookingContext.jsx";
 import { useEventContext } from "../context/EventContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -55,14 +56,19 @@ function EventCard({ event, onSelect }) {
 function CheckIn() {
   const { events, loading: eventsLoading } = useEventContext();
   const { checkInBooking, getBookingsByEvent } = useBookingContext();
+  const { user } = useAuth();
 
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [code, setCode] = useState("");
   const [result, setResult] = useState(null);
 
-  // Only show published (live) events
+  // Only show published (live) events created by the current organizer
   const liveEvents = events.filter(
-    (e) => !e.status || e.status === "published"
+    (e) => {
+      const isPublished = !e.status || e.status === "published";
+      const isMyEvent = user?.id && e.ownerId === user.id;
+      return isPublished && isMyEvent;
+    }
   );
 
   const handleSelectEvent = (event) => {
@@ -98,7 +104,7 @@ function CheckIn() {
     if (String(booking.eventId) !== String(selectedEvent.id)) {
       setResult({
         status: "error",
-        message: `This booking is not for "${selectedEvent.title}". Please use the correct booking ID.`,
+        message: `This ticket is not for "${selectedEvent.title}". Please use the correct ticket code.`,
       });
       return;
     }
@@ -107,6 +113,7 @@ function CheckIn() {
       status: "success",
       message: "Check-in successful. Entry recorded and duplicate use prevented.",
       details: {
+        ticketCode: booking.ticketCode || booking.id,
         bookingId: booking.id,
         eventTitle: selectedEvent.title,
         attendee:
@@ -115,6 +122,7 @@ function CheckIn() {
           "Attendee",
       },
     });
+    setCode(""); // Clear input after successful check-in
   };
 
   // ── Step 1: Event selection ─────────────────────────────────────────────────
@@ -134,7 +142,7 @@ function CheckIn() {
           </div>
         ) : liveEvents.length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
-            No live events found. Events must be published to appear here.
+            No live events found. You need to create and publish events to check in attendees.
           </div>
         ) : (
           <div className="space-y-3">
@@ -206,14 +214,17 @@ function CheckIn() {
       >
         <div className="space-y-1">
           <label className="text-xs font-medium text-slate-700">
-            Booking ID / QR code content
+            Ticket Code / QR code content
           </label>
           <input
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            placeholder="Scan or paste code (e.g. bkg_xxxxx)"
-            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+            placeholder="Scan or enter ticket code (e.g. EVT-0001-XXXXXXXX)"
+            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand font-mono uppercase"
           />
+          <p className="text-xs text-slate-400 mt-1">
+            Enter the ticket code shown on the attendee's ticket
+          </p>
         </div>
         <div className="flex justify-end">
           <Button type="submit">Validate entry</Button>
@@ -240,8 +251,12 @@ function CheckIn() {
                 {result.details.attendee}
               </p>
               <p>
+                <span className="font-semibold">Ticket Code:</span>{" "}
+                <span className="font-mono">{result.details.ticketCode}</span>
+              </p>
+              <p>
                 <span className="font-semibold">Booking ID:</span>{" "}
-                {result.details.bookingId}
+                <span className="font-mono text-xs">{result.details.bookingId}</span>
               </p>
             </div>
           )}

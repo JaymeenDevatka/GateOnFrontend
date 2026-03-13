@@ -6,6 +6,7 @@ import "./index.css";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { EventProvider } from "./context/EventContext.jsx";
 import { BookingProvider } from "./context/BookingContext.jsx";
+import { GoogleMapsProvider } from "./context/GoogleMapsContext.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -13,7 +14,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <AuthProvider>
         <EventProvider>
           <BookingProvider>
-            <App />
+            <GoogleMapsProvider>
+              <App />
+            </GoogleMapsProvider>
           </BookingProvider>
         </EventProvider>
       </AuthProvider>
