@@ -6,6 +6,9 @@ import Button from "../components/common/Button.jsx";
 import { useState } from "react";
 import { useBookingContext } from "../context/BookingContext.jsx";
 
+import { usePlaceImage } from "../hooks/usePlaceImage";
+import { getEventImage } from "../utils/eventImages";
+
 function EventDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -16,6 +19,12 @@ function EventDetails() {
   const [selectedTicket, setSelectedTicket] = useState(initialTicketId);
   const [quantity, setQuantity] = useState(1);
   const maxPerUser = 5;
+
+  const { imageUrl: fetchedImage } = usePlaceImage(
+    event && !event.image && event.location ? `${event.title} ${event.location}` : null
+  );
+
+  const displayImage = event?.image || fetchedImage || getEventImage(event);
 
   if (!event) {
     return (
@@ -55,8 +64,17 @@ function EventDetails() {
   return (
     <div className="container-page grid lg:grid-cols-[2fr,1.4fr] gap-10">
       <section className="space-y-5">
-        <div className="rounded-2xl h-64 relative overflow-hidden bg-gradient-to-br from-brand via-brand to-brand-dark">
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        <div className="rounded-2xl h-64 relative overflow-hidden bg-white">
+          {displayImage ? (
+            <img
+              src={displayImage}
+              alt={event.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-brand via-brand to-brand-dark" />
+          )}
+          {!displayImage && <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />}
         </div>
         <div className="space-y-3">
           <p className="text-xs font-medium text-brand">{event.date?.split('T')[0]}</p>

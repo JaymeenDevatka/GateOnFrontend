@@ -1,9 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { getEventImage } from '../../utils/eventImages';
 
 function EventCard({ event }) {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  const displayImage = getEventImage(event);
 
   const handleClick = (e) => {
     if (!isAuthenticated()) {
@@ -20,9 +23,9 @@ function EventCard({ event }) {
     >
       {/* Image Container */}
       <div className="relative h-52 overflow-hidden">
-        {event.image ? (
+        {displayImage ? (
           <img
-            src={event.image}
+            src={displayImage}
             alt={event.title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />

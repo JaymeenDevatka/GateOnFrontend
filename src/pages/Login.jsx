@@ -140,7 +140,7 @@ function Login() {
             </Button>
           </form>
 
-          <div className="relative">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-300 shadow-[0_1px_0_rgba(255,255,255,0.8)]"></div>
             </div>
@@ -151,6 +151,7 @@ function Login() {
 
           <button
             type="button"
+            onClick={() => window.location.href = "http://localhost:3000/api/auth/google"}
             className="w-full flex items-center justify-center gap-2 py-3 bg-white border-2 border-slate-200 rounded-xl text-slate-800 font-bold text-sm shadow-sm hover:bg-slate-50 hover:border-slate-300 hover:shadow-md transition-all duration-200 group"
           >
             <div className="group-hover:scale-110 transition-transform duration-200">
@@ -159,7 +160,7 @@ function Login() {
             Sign in with Google
           </button>
 
-          <p className="text-center text-sm text-slate-500">
+          <p className="text-center text-sm text-slate-500 mt-6">
             Don't have an account?{' '}
             <Link to="/signup" state={{ from: location.state?.from }} className="font-bold text-brand hover:text-brand-dark transition-colors hover:underline">
               Create an account
