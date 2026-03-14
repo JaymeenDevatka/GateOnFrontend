@@ -55,7 +55,9 @@ function Login() {
     try {
       const data = await loginApi({ email, password });
       setUserFromApi(data.user);
-      navigate(from, { replace: true });
+      // Redirect admin to admin dashboard
+      const redirectTo = data.user.role === "Admin" ? "/admin" : from;
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err?.data?.message || err?.message || 'Login failed. Please try again.');
     } finally {
