@@ -8,6 +8,7 @@ import CreateEvent from "./pages/CreateEvent.jsx";
 import Checkout from "./pages/Checkout.jsx";
 import OrganizerDashboard from "./pages/OrganizerDashboard.jsx";
 import AttendeeDashboard from "./pages/AttendeeDashboard.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
 import CheckIn from "./pages/CheckIn.jsx";
 import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
@@ -99,6 +100,14 @@ function App() {
                 roles={["Admin", "EventManager", "Volunteer"]}
               >
                 <CheckIn />
+              </Guard>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <Guard requireAuth roles={["Admin"]}>
+                <AdminDashboard />
               </Guard>
             }
           />

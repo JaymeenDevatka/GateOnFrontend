@@ -139,11 +139,3 @@ export async function updatePromoApi(promoId, payload) {
     body: payload,
   });
 }
-
-export async function loginApi(payload) {
-  return request("/api/auth/login", { method: "POST", body: payload });
-}
-
-export async function signupApi(payload) {
-  return request("/api/auth/signup", { method: "POST", body: payload });
-}

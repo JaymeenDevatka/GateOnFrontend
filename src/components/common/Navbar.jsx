@@ -85,6 +85,14 @@ function Navbar() {
           >
             Check-in
           </NavLink>
+          {user?.role === "Admin" && (
+            <NavLink
+              to="/admin"
+              className={navLinkClasses}
+            >
+              Admin
+            </NavLink>
+          )}
 
         </div>
 
