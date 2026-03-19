@@ -53,6 +53,8 @@ export function EventProvider({ children }) {
       rating: Number(data.rating) || 0,
       status: data.status || "published",
       ownerId,
+      participationType: data.participationType || "solo",
+      maxTeamSize: data.maxTeamSize || 1,
       tickets: normalizeTicketsForApi(data.tickets || []),
     };
 
@@ -75,6 +77,8 @@ export function EventProvider({ children }) {
       trending: Boolean(data.trending),
       rating: Number(data.rating) || 0,
       status: data.status || "published",
+      participationType: data.participationType,
+      maxTeamSize: data.maxTeamSize,
       tickets: normalizeTicketsForApi(data.tickets || []),
     };
 

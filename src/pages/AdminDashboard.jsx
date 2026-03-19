@@ -473,8 +473,8 @@ export default function AdminDashboard() {
                             <thead>
                                 <tr className="border-b border-slate-100 bg-slate-50/80">
                                     <th className="text-left px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Ticket Code</th>
-                                    <th className="text-left px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Attendee</th>
                                     <th className="text-left px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Event</th>
+                                    <th className="text-left px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Team</th>
                                     <th className="text-left px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                                     <th className="text-left px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Qty</th>
                                     <th className="text-left px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Total</th>
@@ -494,6 +494,16 @@ export default function AdminDashboard() {
                                             <p className="text-xs text-slate-400">{b.attendeeEmail || b.user?.email || "—"}</p>
                                         </td>
                                         <td className="px-6 py-4 text-sm font-medium text-slate-700">{b.event?.title || `Event #${b.eventId}`}</td>
+                                        <td className="px-6 py-4">
+                                            {b.teamName ? (
+                                                <>
+                                                    <p className="text-sm font-bold text-slate-800">{b.teamName}</p>
+                                                    <p className="text-xs text-slate-400">{b.teamSize} Member{b.teamSize > 1 ? 's' : ''}</p>
+                                                </>
+                                            ) : (
+                                                <span className="text-sm text-slate-400">—</span>
+                                            )}
+                                        </td>
                                         <td className="px-6 py-4"><StatusBadge status={b.status} /></td>
                                         <td className="px-6 py-4 text-sm font-semibold text-slate-600">{b.quantity}</td>
                                         <td className="px-6 py-4 text-sm font-bold text-slate-800">{formatCurrency(b.total)}</td>

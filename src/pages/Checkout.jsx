@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "../components/common/Button.jsx";
 import { useEventContext } from "../context/EventContext.jsx";
 import { useBookingContext } from "../context/BookingContext.jsx";
@@ -65,6 +65,31 @@ function Checkout() {
     email: "",
     phone: "",
   });
+
+  const [team, setTeam] = useState({ name: "", size: 1 });
+  const [teamMembers, setTeamMembers] = useState([{ name: "", email: "", phone: "" }]);
+
+  const isTeamEvent = event?.participationType === "team";
+  const maxTeamSize = event?.maxTeamSize ?? 1;
+
+  // Handle team size changes
+  useEffect(() => {
+    if (isTeamEvent) {
+      setTeamMembers((prev) => {
+        const newSize = Math.max(1, Math.min(maxTeamSize, team.size));
+        const newMembers = [...prev];
+        if (newMembers.length < newSize) {
+          return [
+            ...newMembers,
+            ...Array.from({ length: newSize - newMembers.length }, () => ({ name: "", email: "", phone: "" }))
+          ];
+        } else if (newMembers.length > newSize) {
+          return newMembers.slice(0, newSize);
+        }
+        return newMembers;
+      });
+    }
+  }, [team.size, maxTeamSize, isTeamEvent]);
 
   const [delivery, setDelivery] = useState({ email: true, whatsapp: false });
   const [paymentMethod, setPaymentMethod] = useState("upi");
@@ -135,6 +160,37 @@ function Checkout() {
       setError("Please enter a valid email address");
       return;
     }
+    if (isTeamEvent) {
+      if (!team.name.trim()) {
+        setError("Please enter your team name");
+        return;
+      }
+      if (team.size < 1 || team.size > maxTeamSize) {
+        setError(`Team size must be between 1 and ${maxTeamSize}`);
+        return;
+      }
+      
+      // Auto-sync Team Leader to Member 1
+      if (teamMembers.length > 0) {
+        teamMembers[0] = {
+           name: `${attendee.firstName} ${attendee.lastName}`.trim(),
+           email: attendee.email,
+           phone: attendee.phone
+        };
+      }
+
+      for (let i = 0; i < teamMembers.length; i++) {
+        const m = teamMembers[i];
+        if (!m.name.trim()) {
+          setError(`Please enter a name for team member ${i + 1}`);
+          return;
+        }
+        if (!m.email.includes("@")) {
+          setError(`Please enter a valid email for team member ${i + 1}`);
+          return;
+        }
+      }
+    }
     if (!isAuthenticated() || !user || !user.id) {
       setError("You must be logged in to place an order. Please log in and try again.");
       console.error("User not authenticated:", { user, isAuthenticated: isAuthenticated() });
@@ -156,6 +212,9 @@ function Checkout() {
         attendee,
         promoCode: appliedPromo?.code || null,
         delivery,
+        teamName: isTeamEvent ? team.name.trim() : undefined,
+        teamSize: isTeamEvent ? team.size : undefined,
+        teamMembers: isTeamEvent ? teamMembers : undefined,
       });
 
       if (result.ok) {
@@ -206,7 +265,7 @@ function Checkout() {
             <div>
               <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
                 <span className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-sm">1</span>
-                Contact Information
+                {isTeamEvent ? "Team Leader Contact" : "Contact Information"}
               </h2>
               <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8">
                 <div className="grid sm:grid-cols-2 gap-5">
@@ -253,6 +312,103 @@ function Checkout() {
                     </div>
                   </div>
                 </div>
+
+                {/* Team fields - only shown for team events */}
+                {isTeamEvent && (
+                  <div className="mt-6 pt-6 border-t border-slate-100">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-lg">👥</span>
+                      <h3 className="text-base font-bold text-slate-800">Team Details</h3>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-brand/10 text-brand border border-brand/20">
+                        Max {maxTeamSize} members
+                      </span>
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-5">
+                      <div className="space-y-1.5 sm:col-span-2">
+                        <label className="text-sm font-semibold text-slate-700">Team Name <span className="text-rose-500">*</span></label>
+                        <input
+                          placeholder="e.g. Alpha Squad"
+                          value={team.name}
+                          onChange={(e) => setTeam((prev) => ({ ...prev, name: e.target.value }))}
+                          className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all placeholder:text-slate-400"
+                        />
+                      </div>
+                      <div className="space-y-1.5 sm:col-span-2">
+                        <label className="text-sm font-semibold text-slate-700">
+                          Team Size <span className="text-slate-400 font-normal">(1–{maxTeamSize})</span>
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max={maxTeamSize}
+                          value={team.size}
+                          onChange={(e) => setTeam((prev) => ({ ...prev, size: Math.min(maxTeamSize, Math.max(1, Number(e.target.value))) }))}
+                          className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all"
+                        />
+                        <p className="text-xs text-slate-400">Number of people in your team (including the leader).</p>
+                      </div>
+
+                      {/* Team Members List */}
+                      {teamMembers.length > 1 && (
+                        <div className="sm:col-span-2 space-y-4 mt-2">
+                          <label className="text-sm font-semibold text-slate-700 block border-b border-slate-100 pb-2">Other Member Details</label>
+                          {teamMembers.slice(1).map((member, idx) => {
+                            const index = idx + 1;
+                            return (
+                              <div key={index} className="bg-slate-50 border border-slate-200 rounded-xl p-4 relative">
+                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
+                                  Member {index + 1}
+                                </h4>
+                                <div className="grid sm:grid-cols-2 gap-4">
+                                  <div className="space-y-1.5 sm:col-span-2">
+                                    <label className="text-xs font-semibold text-slate-700">Name <span className="text-rose-500">*</span></label>
+                                    <input
+                                      placeholder="Full Name"
+                                      value={member.name}
+                                      onChange={(e) => {
+                                        const newMembers = [...teamMembers];
+                                        newMembers[index].name = e.target.value;
+                                        setTeamMembers(newMembers);
+                                      }}
+                                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all"
+                                    />
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-slate-700">Email <span className="text-rose-500">*</span></label>
+                                    <input
+                                      type="email"
+                                      placeholder="Email Address"
+                                      value={member.email}
+                                      onChange={(e) => {
+                                        const newMembers = [...teamMembers];
+                                        newMembers[index].email = e.target.value;
+                                        setTeamMembers(newMembers);
+                                      }}
+                                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all"
+                                    />
+                                  </div>
+                                  <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-slate-700">Phone <span className="text-slate-400 font-normal">(Optional)</span></label>
+                                    <input
+                                      placeholder="Phone Number"
+                                      value={member.phone}
+                                      onChange={(e) => {
+                                        const newMembers = [...teamMembers];
+                                        newMembers[index].phone = e.target.value;
+                                        setTeamMembers(newMembers);
+                                      }}
+                                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -389,6 +545,12 @@ function Checkout() {
                 <p className="text-sm text-emerald-700">
                   Booking ID: <span className="font-mono font-bold">{booking.id}</span>
                 </p>
+                <div className="bg-white/60 p-3 rounded-lg border border-emerald-100 mt-2 flex items-start gap-2">
+                  <MailIcon />
+                  <p className="text-xs text-emerald-800">
+                    Your ticket and QR code have been sent to <strong>{booking.attendee?.email || attendee.email}</strong>.
+                  </p>
+                </div>
                 <Button
                   variant="outline"
                   className="w-full mt-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50"

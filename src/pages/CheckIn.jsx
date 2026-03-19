@@ -3,6 +3,7 @@ import Button from "../components/common/Button.jsx";
 import { useBookingContext } from "../context/BookingContext.jsx";
 import { useEventContext } from "../context/EventContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { Scanner } from '@yudiel/react-qr-scanner';
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -61,6 +62,7 @@ function CheckIn() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [code, setCode] = useState("");
   const [result, setResult] = useState(null);
+  const [isScanning, setIsScanning] = useState(true); // Default to camera scanner
 
   // Only show published (live) events created by the current organizer
   const liveEvents = events.filter(
@@ -83,11 +85,18 @@ function CheckIn() {
     setResult(null);
   };
 
-  const handleCheck = async (e) => {
-    e.preventDefault();
-    if (!code.trim()) return;
+  const handleCheck = async (eOrCode) => {
+    // Determine if called by form submission (e) or direct code string
+    let submitCode = code;
+    if (typeof eOrCode === "string") {
+      submitCode = eOrCode;
+    } else if (eOrCode && eOrCode.preventDefault) {
+      eOrCode.preventDefault();
+    }
+    
+    if (!submitCode.trim()) return;
 
-    const normalized = code.trim().toUpperCase();
+    const normalized = submitCode.trim().toUpperCase();
 
     const res = await checkInBooking(normalized);
     if (!res.ok) {
@@ -122,7 +131,25 @@ function CheckIn() {
           "Attendee",
       },
     });
-    setCode(""); // Clear input after successful check-in
+    // Don't clear state if we are continuously scanning; 
+    // it helps the user see what code just succeeded. Wait 3 seconds to clear the scanner success flash.
+    if (!isScanning) {
+      setCode("");
+    }
+  };
+
+  const handleScan = (detectedCodes) => {
+    if (detectedCodes && detectedCodes.length > 0) {
+      const scannedCode = detectedCodes[0].rawValue;
+      if (scannedCode !== code) {
+        setCode(scannedCode);
+        handleCheck(scannedCode);
+      }
+    }
+  };
+
+  const handleError = (error) => {
+    console.error("QR Code scanning error:", error);
   };
 
   // ── Step 1: Event selection ─────────────────────────────────────────────────
@@ -208,28 +235,75 @@ function CheckIn() {
       </div>
 
       {/* Check-in form */}
-      <form
-        onSubmit={handleCheck}
-        className="bg-surface-elevated rounded-2xl border border-slate-200/80 shadow-card p-5 space-y-4"
-      >
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-slate-700">
-            Ticket Code / QR code content
-          </label>
-          <input
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="Scan or enter ticket code (e.g. EVT-0001-XXXXXXXX)"
-            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand font-mono uppercase"
-          />
-          <p className="text-xs text-slate-400 mt-1">
-            Enter the ticket code shown on the attendee's ticket
-          </p>
+      <div className="bg-surface-elevated rounded-2xl border border-slate-200/80 shadow-card p-5 space-y-4">
+        
+        {/* Toggle Scanner Mode */}
+        <div className="flex bg-slate-100 p-1 rounded-lg">
+          <button 
+            type="button"
+            onClick={() => setIsScanning(true)}
+            className={`flex-1 py-1.5 text-sm font-semibold rounded-md transition-colors ${isScanning ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            📷 Scan QR Code
+          </button>
+          <button 
+            type="button"
+            onClick={() => setIsScanning(false)}
+            className={`flex-1 py-1.5 text-sm font-semibold rounded-md transition-colors ${!isScanning ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            ⌨️ Manual Entry
+          </button>
         </div>
-        <div className="flex justify-end">
-          <Button type="submit">Validate entry</Button>
-        </div>
-      </form>
+
+        {isScanning ? (
+          <div className="space-y-4">
+            <div className="rounded-xl overflow-hidden border-2 border-slate-200 bg-black aspect-square max-w-sm mx-auto shadow-inner relative">
+              <Scanner 
+                onScan={handleScan}
+                onError={handleError}
+                formats={["qr_code"]}
+                components={{
+                  onOff: true,
+                  finder: false, // We use our own styling
+                }}
+                styles={{
+                  container: { width: '100%', height: '100%' },
+                  video: { objectFit: 'cover' }
+                }}
+              />
+              <div className="absolute inset-0 pointer-events-none border-[40px] border-black/40">
+                 <div className="w-full h-full border-2 border-brand/80"></div>
+              </div>
+            </div>
+            <p className="text-center text-sm text-slate-500">
+              Point your camera at the attendee's ticket. It will scan automatically.
+            </p>
+          </div>
+        ) : (
+          <form
+            onSubmit={handleCheck}
+            className="space-y-4"
+          >
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-slate-700">
+                Ticket Code / QR code content
+              </label>
+              <input
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="EVT-0001-XXXXXXXX"
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand font-mono uppercase"
+              />
+              <p className="text-xs text-slate-400 mt-1">
+                Enter the ticket code manually if scanning fails.
+              </p>
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit">Validate entry</Button>
+            </div>
+          </form>
+        )}
+      </div>
 
       {/* Result banner */}
       {result && (

@@ -139,3 +139,60 @@ export async function updatePromoApi(promoId, payload) {
     body: payload,
   });
 }
+
+// ─── Admin API ───────────────────────────────────────────
+
+export async function fetchAdminStats(userId) {
+  return request("/api/admin/stats", {
+    headers: { "X-User-Id": userId },
+  });
+}
+
+export async function fetchAdminUsers(userId) {
+  const data = await request("/api/admin/users", {
+    headers: { "X-User-Id": userId },
+  });
+  return data.items ?? [];
+}
+
+export async function updateUserStatusApi(userId, targetUserId, status) {
+  return request(`/api/admin/users/${encodeURIComponent(targetUserId)}/status`, {
+    method: "PATCH",
+    body: { status },
+    headers: { "X-User-Id": userId },
+  });
+}
+
+export async function deleteAdminUser(userId, targetUserId) {
+  return request(`/api/admin/users/${encodeURIComponent(targetUserId)}`, {
+    method: "DELETE",
+    headers: { "X-User-Id": userId },
+  });
+}
+
+export async function fetchAdminEvents(userId) {
+  const data = await request("/api/admin/events", {
+    headers: { "X-User-Id": userId },
+  });
+  return data.items ?? [];
+}
+
+export async function deleteAdminEvent(userId, eventId) {
+  return request(`/api/admin/events/${encodeURIComponent(eventId)}`, {
+    method: "DELETE",
+    headers: { "X-User-Id": userId },
+  });
+}
+
+export async function fetchAdminBookings(userId) {
+  const data = await request("/api/admin/bookings", {
+    headers: { "X-User-Id": userId },
+  });
+  return data.items ?? [];
+}
+
+export async function fetchAdminAnalytics(userId) {
+  return request("/api/admin/analytics", {
+    headers: { "X-User-Id": userId },
+  });
+}

@@ -61,6 +61,9 @@ export function BookingProvider({ children }) {
       },
       status: b.status,
       checkedInAt: b.checkedInAt,
+      teamName: b.teamName || null,
+      teamSize: b.teamSize ?? 1,
+      teamMembers: Array.isArray(b.teamMembers) ? b.teamMembers : (b.teamMembers || null),
       createdAt: b.createdAt,
       updatedAt: b.updatedAt,
       _raw: b,
@@ -179,6 +182,9 @@ export function BookingProvider({ children }) {
     attendee,
     promoCode,
     delivery,
+    teamName,
+    teamSize,
+    teamMembers,
   }) => {
     // Get current user value (not from closure)
     const currentUser = user;
@@ -221,6 +227,9 @@ export function BookingProvider({ children }) {
           },
           promoCode: promoCode || undefined,
           delivery: deliveryMode,
+          teamName: teamName || undefined,
+          teamSize: teamSize || undefined,
+          teamMembers: teamMembers || undefined,
         });
 
         const mapped = mapBookingFromApi(created);

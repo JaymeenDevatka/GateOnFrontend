@@ -24,6 +24,8 @@ function CreateEvent() {
     status: "published", // or 'draft'
     isOnline: false,
     liveLink: "",
+    participationType: "solo", // "solo" | "team"
+    maxTeamSize: 2,
   });
   const [tickets, setTickets] = useState([
     {
@@ -85,6 +87,8 @@ function CreateEvent() {
       rating: 0,
       ownerId: user?.id ?? null,
       tickets: normalizedTickets,
+      participationType: form.participationType,
+      maxTeamSize: form.participationType === "team" ? Number(form.maxTeamSize) : 1,
     });
     if (user) {
       setUserFromApi({ ...user, role: "EventManager" });
@@ -308,6 +312,48 @@ function CreateEvent() {
                 />
                 <p className="text-xs text-slate-500 mt-1">Maximum number of attendees.</p>
               </div>
+
+              {/* Participation Type */}
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-2 block">Participation Type</label>
+                <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
+                  {[
+                    { key: "solo", label: "Solo", emoji: "🧑" },
+                    { key: "team", label: "Team", emoji: "👥" },
+                  ].map(({ key, label, emoji }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => update("participationType", key)}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+                        form.participationType === key
+                          ? "bg-brand text-white shadow-sm"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <span>{emoji}</span>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Max Team Size — only shown when Team is selected */}
+              {form.participationType === "team" && (
+                <div className="animate-slide-up">
+                  <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Max Team Size</label>
+                  <input
+                    type="number"
+                    min="2"
+                    max="50"
+                    value={form.maxTeamSize}
+                    onChange={(e) => update("maxTeamSize", Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
+                    placeholder="e.g. 5"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Maximum number of members per team (min 2).</p>
+                </div>
+              )}
             </div>
           </div>
 

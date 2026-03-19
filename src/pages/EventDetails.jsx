@@ -5,6 +5,7 @@ import QRPreview from "../components/ticket/QRPreview.jsx";
 import Button from "../components/common/Button.jsx";
 import { useState } from "react";
 import { useBookingContext } from "../context/BookingContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 import { usePlaceImage } from "../hooks/usePlaceImage";
 import { getEventImage } from "../utils/eventImages";
@@ -12,13 +13,17 @@ import { getEventImage } from "../utils/eventImages";
 function EventDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { getEventById } = useEventContext();
-  const { getTicketSoldCount } = useBookingContext();
+  const { getTicketSoldCount, getBookingsByUser } = useBookingContext();
   const event = getEventById(id);
   const initialTicketId = event?.tickets?.[0]?.id || "general";
   const [selectedTicket, setSelectedTicket] = useState(initialTicketId);
   const [quantity, setQuantity] = useState(1);
   const maxPerUser = 5;
+
+  const userBookings = user ? getBookingsByUser(user.id) : [];
+  const hasBooked = event ? userBookings.some((b) => String(b.eventId) === String(event.id) && b.status !== "cancelled") : false;
 
   const { imageUrl: fetchedImage } = usePlaceImage(
     event && !event.image && event.location ? `${event.title} ${event.location}` : null
@@ -164,9 +169,9 @@ function EventDetails() {
           <Button
             className="w-full mt-1"
             onClick={handleCheckout}
-            disabled={!selectedTicketObj || selectedTicketObj.remaining === 0}
+            disabled={!selectedTicketObj || selectedTicketObj.remaining === 0 || hasBooked}
           >
-            Checkout
+            {hasBooked ? "Already Registered" : "Checkout"}
           </Button>
         </div>
         <QRPreview eventTitle={event.title} />

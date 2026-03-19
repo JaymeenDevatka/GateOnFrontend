@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useEventContext } from "../context/EventContext.jsx";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 
 function openPrintableTicket({ event, booking, ticketLabel }) {
   const safe = (v) => String(v ?? "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -98,6 +99,8 @@ function AttendeeDashboard() {
         checkedInAt: b.checkedInAt,
         quantity: b.quantity || 1,
         total: b.pricing?.total || 0,
+        teamName: b.teamName || null,
+        teamSize: b.teamSize ?? null,
         raw: { booking: b, event, ticket },
       };
     });
@@ -194,11 +197,20 @@ function AttendeeDashboard() {
                 </button>
               </div>
 
-              {/* QR placeholder */}
+              {/* QR Code */}
               <div className="flex justify-center my-5">
-                <div className="w-36 h-36 bg-slate-900 rounded-2xl flex flex-col items-center justify-center gap-1">
-                  <svg className="w-16 h-16 text-white/20" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h7v7H3V3zm1 1v5h5V4H4zm1 1h3v3H5V5zm8-2h7v7h-7V3zm1 1v5h5V4h-5zm1 1h3v3h-3V5zM3 13h7v7H3v-7zm1 1v5h5v-5H4zm1 1h3v3H5v-3zm8 0h2v2h-2v-2zm0 4h2v2h-2v-2zm4-4h2v2h-2v-2zm-2 2h2v2h-2v-2zm2 2h2v2h-2v-2z" /></svg>
-                  <p className="text-white/40 text-[10px] font-mono">{String(selected.bookingId).slice(0, 8).toUpperCase()}</p>
+                <div className="bg-white p-3 rounded-2xl border-2 border-slate-100 shadow-sm flex flex-col items-center justify-center gap-2">
+                  <QRCodeSVG 
+                    value={selected.ticketCode || selected.bookingId} 
+                    size={150}
+                    bgColor={"#ffffff"}
+                    fgColor={"#0f172a"}
+                    level={"H"}
+                    includeMargin={false}
+                  />
+                  <p className="text-slate-500 text-[11px] font-mono font-bold tracking-widest uppercase">
+                    {String(selected.ticketCode || selected.bookingId).slice(0, 16).toUpperCase()}
+                  </p>
                 </div>
               </div>
 
@@ -211,6 +223,10 @@ function AttendeeDashboard() {
                   { label: "Amount Paid", value: `₹${(selected.total || 0).toLocaleString()}` },
                   { label: "Status", value: selected.status },
                   { label: "Booking ID", value: String(selected.bookingId).slice(0, 12), mono: true },
+                  ...(selected.teamName ? [
+                    { label: "Team Name", value: selected.teamName },
+                    { label: "Team Size", value: `${selected.teamSize} member${selected.teamSize > 1 ? "s" : ""}` },
+                  ] : []),
                 ].map(({ label, value, mono, highlight }) => (
                   <div key={label}>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</p>
