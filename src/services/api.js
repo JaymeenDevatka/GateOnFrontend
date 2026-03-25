@@ -196,3 +196,69 @@ export async function fetchAdminAnalytics(userId) {
     headers: { "X-User-Id": userId },
   });
 }
+
+// ─── Payment API ─────────────────────────────────────────────────────────────
+
+/**
+ * Step 1: Ask the backend to create a Razorpay order.
+ * Returns { free, orderId?, amount, currency, keyId?, paymentDbId?, pricing }
+ */
+export async function createPaymentOrder({ eventId, ticketId, quantity, promoCode }) {
+  return request("/api/payments/create-order", {
+    method: "POST",
+    body: { eventId, ticketId, quantity, promoCode },
+  });
+}
+
+/**
+ * Step 2 (paid events): Verify Razorpay signature and create booking.
+ * Returns the created booking.
+ */
+export async function verifyPaymentAndBook(payload) {
+  return request("/api/payments/verify", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+/**
+ * Step 2 (free events): Create booking directly, no payment.
+ */
+export async function freeBookingApi(payload) {
+  return request("/api/payments/free-booking", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+// ─── Admin Payment API ────────────────────────────────────────────────────────
+
+export async function fetchAdminPayments(userId, status = "") {
+  const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+  const data = await request(`/api/admin/payments${qs}`, {
+    headers: { "X-User-Id": userId },
+  });
+  return data.items ?? [];
+}
+
+export async function fetchAdminPaymentSummary(userId) {
+  const data = await request("/api/admin/payments/summary", {
+    headers: { "X-User-Id": userId },
+  });
+  return data.summary ?? [];
+}
+
+export async function distributePaymentApi(userId, paymentId, { amount, note }) {
+  return request(`/api/admin/payments/${encodeURIComponent(paymentId)}/distribute`, {
+    method: "POST",
+    body: { amount, note },
+    headers: { "X-User-Id": userId },
+  });
+}
+
+export async function refundPaymentApi(userId, paymentId) {
+  return request(`/api/admin/payments/${encodeURIComponent(paymentId)}/refund`, {
+    method: "POST",
+    headers: { "X-User-Id": userId },
+  });
+}

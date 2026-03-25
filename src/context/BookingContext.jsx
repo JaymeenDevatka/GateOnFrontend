@@ -243,6 +243,15 @@ export function BookingProvider({ children }) {
     })();
   };
 
+  const addBookingToState = (bookingData) => {
+    const mapped = mapBookingFromApi(bookingData);
+    setBookings((prev) => {
+      // Avoid duplicates
+      if (prev.some((b) => b.id === mapped.id)) return prev;
+      return [mapped, ...prev];
+    });
+  };
+
   const cancelBooking = async (bookingId) => {
     try {
       const updated = await cancelBookingApi(bookingId);
@@ -292,6 +301,7 @@ export function BookingProvider({ children }) {
       removePromoCode,
       findPromo,
       createBooking,
+      addBookingToState,
       cancelBooking,
       checkInBooking,
       getBookingsByUser,

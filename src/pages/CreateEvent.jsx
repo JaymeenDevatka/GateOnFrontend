@@ -66,6 +66,7 @@ function CreateEvent() {
 
     const normalizedTickets = tickets.map((t) => ({
       ...t,
+      price: Number(form.price) || Number(t.price) || 0,
       description: t.description || "",
     }));
 

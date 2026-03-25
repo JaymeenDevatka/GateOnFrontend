@@ -9,11 +9,14 @@ import {
     deleteAdminUser,
     deleteAdminEvent,
     fetchAdminAnalytics,
+    fetchAdminPayments,
+    fetchAdminPaymentSummary,
 } from "../services/api.js";
 import {
     AreaChart, Area, BarChart, Bar, LineChart, Line,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
+import AdminPaymentsTab from "./AdminPaymentsTab.jsx";
 
 /* ── Inline SVG Icons ─────────────────────────────────────── */
 const UsersIcon = () => (
@@ -71,6 +74,7 @@ const TABS = [
     { id: "events", label: "Events", icon: "📅" },
     { id: "bookings", label: "Bookings", icon: "🎫" },
     { id: "analytics", label: "Analytics", icon: "📈" },
+    { id: "payments", label: "Payments", icon: "💰" },
 ];
 
 /* ═══════════════════════════════════════════════════════════ */
@@ -89,17 +93,21 @@ export default function AdminDashboard() {
     const [searchQuery, setSearchQuery] = useState("");
     const [actionLoading, setActionLoading] = useState(null);
     const [analytics, setAnalytics] = useState(null);
+    const [payments, setPayments] = useState([]);
+    const [paymentSummary, setPaymentSummary] = useState([]);
 
     const loadData = useCallback(async () => {
         if (!user?.id) return;
         setLoading(true);
         try {
-            const [statsData, usersData, eventsData, bookingsData, analyticsData] = await Promise.all([
+            const [statsData, usersData, eventsData, bookingsData, analyticsData, paymentsData, summaryData] = await Promise.all([
                 fetchAdminStats(user.id),
                 fetchAdminUsers(user.id),
                 fetchAdminEvents(user.id),
                 fetchAdminBookings(user.id),
                 fetchAdminAnalytics(user.id),
+                fetchAdminPayments(user.id),
+                fetchAdminPaymentSummary(user.id),
             ]);
             setStats(statsData.stats);
             setRecentUsers(statsData.recentUsers || []);
@@ -108,6 +116,8 @@ export default function AdminDashboard() {
             setEvents(eventsData);
             setBookings(bookingsData);
             setAnalytics(analyticsData);
+            setPayments(paymentsData);
+            setPaymentSummary(summaryData);
         } catch (err) {
             console.error("Failed to load admin data:", err);
         } finally {
@@ -632,6 +642,15 @@ export default function AdminDashboard() {
                         </>
                     )}
                 </div>
+            )}
+
+            {activeTab === "payments" && (
+                <AdminPaymentsTab
+                    payments={payments}
+                    summary={paymentSummary}
+                    adminUserId={user.id}
+                    onRefresh={loadData}
+                />
             )}
         </div>
     );
