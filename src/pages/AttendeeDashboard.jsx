@@ -31,6 +31,13 @@ function openPrintableTicket({ event, booking, ticketLabel }) {
           .qr-box { width: 120px; height: 120px; background: #0f172a; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 11px; text-align: center; padding: 8px; }
           .bottom { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
           .badge { display: inline-flex; align-items: center; gap: 6px; background: #ede9fe; color: #6366f1; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 999px; }
+          .team-section { margin-top: 0; }
+          .team-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; margin-bottom: 10px; }
+          .team-member { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #f8fafc; border-radius: 10px; margin-bottom: 6px; }
+          .team-member .num { width: 22px; height: 22px; border-radius: 50%; background: #ede9fe; color: #6366f1; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+          .team-member .info { flex: 1; }
+          .team-member .name { font-size: 13px; font-weight: 700; color: #0f172a; }
+          .team-member .email { font-size: 11px; color: #64748b; }
           .print-btn { margin-top: 20px; padding: 12px 20px; background: #6366f1; color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; }
           @media print { .print-btn { display: none; } body { background: white; } }
         </style>
@@ -46,11 +53,28 @@ function openPrintableTicket({ event, booking, ticketLabel }) {
             <div class="grid">
               <div class="field"><label>Ticket Code</label><p style="font-family:monospace;font-size:14px;font-weight:900;color:#6366f1;">${safe(booking.ticketCode || booking.id)}</p></div>
               <div class="field"><label>Ticket Type</label><p>${safe(ticketLabel)}</p></div>
-              <div class="field"><label>Attendee</label><p>${safe(booking.attendee?.firstName)} ${safe(booking.attendee?.lastName)}</p></div>
+              <div class="field"><label>Attendee</label><p>${safe(booking.attendee?.firstName || booking.attendee?.name)} ${safe(booking.attendee?.lastName || '')}</p></div>
               <div class="field"><label>Email</label><p style="font-size:12px;">${safe(booking.attendee?.email)}</p></div>
               <div class="field"><label>Quantity</label><p>${safe(booking.quantity)}</p></div>
               <div class="field"><label>Amount Paid</label><p>₹${safe(booking.pricing?.total || 0)}</p></div>
+              ${booking.teamName ? `<div class="field"><label>Team Name</label><p>${safe(booking.teamName)}</p></div>` : ''}
+              ${booking.teamSize ? `<div class="field"><label>Team Size</label><p>${safe(booking.teamSize)} member${booking.teamSize > 1 ? 's' : ''}</p></div>` : ''}
             </div>
+            ${Array.isArray(booking.teamMembers) && booking.teamMembers.length > 0 ? `
+            <hr class="divider" />
+            <div class="team-section">
+              <p class="team-title">👥 Team Members</p>
+              ${booking.teamMembers.map((m, i) => `
+                <div class="team-member">
+                  <div class="num">${i + 1}</div>
+                  <div class="info">
+                    <div class="name">${safe(m.name)}</div>
+                    <div class="email">${safe(m.email)}${m.phone ? ` · ${safe(m.phone)}` : ''}</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            ` : ''}
             <hr class="divider" />
             <div class="bottom">
               <div>
@@ -101,6 +125,7 @@ function AttendeeDashboard() {
         total: b.pricing?.total || 0,
         teamName: b.teamName || null,
         teamSize: b.teamSize ?? null,
+        teamMembers: Array.isArray(b.teamMembers) ? b.teamMembers : null,
         raw: { booking: b, event, ticket },
       };
     });
@@ -200,8 +225,8 @@ function AttendeeDashboard() {
               {/* QR Code */}
               <div className="flex justify-center my-5">
                 <div className="bg-white p-3 rounded-2xl border-2 border-slate-100 shadow-sm flex flex-col items-center justify-center gap-2">
-                  <QRCodeSVG 
-                    value={selected.ticketCode || selected.bookingId} 
+                  <QRCodeSVG
+                    value={selected.ticketCode || selected.bookingId}
                     size={150}
                     bgColor={"#ffffff"}
                     fgColor={"#0f172a"}
@@ -234,6 +259,24 @@ function AttendeeDashboard() {
                   </div>
                 ))}
               </div>
+
+              {/* Team Members list
+              {Array.isArray(selected.teamMembers) && selected.teamMembers.length > 0 && (
+                <div className="border-t border-dashed border-slate-200 pt-4 mb-4">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">👥 Team Members</p>
+                  <div className="space-y-2">
+                    {selected.teamMembers.map((m, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-slate-50 rounded-xl px-3 py-2">
+                        <span className="w-6 h-6 rounded-full bg-brand/10 text-brand text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-slate-900 truncate">{m.name}</p>
+                          <p className="text-xs text-slate-500 truncate">{m.email}{m.phone ? ` · ${m.phone}` : ''}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )} */}
 
               {/* Action buttons */}
               <div className="flex gap-2">

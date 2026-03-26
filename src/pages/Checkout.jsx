@@ -131,7 +131,8 @@ function Checkout() {
       if (!team.name.trim()) return "Please enter your team name";
       if (team.size < 1 || team.size > maxTeamSize)
         return `Team size must be between 1 and ${maxTeamSize}`;
-      for (let i = 0; i < teamMembers.length; i++) {
+      // Start from index 1: member 0 (team leader) is auto-filled from attendee fields
+      for (let i = 1; i < teamMembers.length; i++) {
         if (!teamMembers[i].name.trim()) return `Name required for member ${i + 1}`;
         if (!teamMembers[i].email.includes("@")) return `Valid email required for member ${i + 1}`;
       }
