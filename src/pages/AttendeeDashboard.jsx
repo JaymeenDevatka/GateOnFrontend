@@ -4,11 +4,58 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useEventContext } from "../context/EventContext.jsx";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { QRCodeSVG } from "qrcode.react";
+import { QRCodeSVG, QRCodeCanvas } from "qrcode.react";
+import { createRoot } from "react-dom/client";
+import { createElement } from "react";
+import { flushSync } from "react-dom";
 
-function openPrintableTicket({ event, booking, ticketLabel }) {
+/**
+ * Generate a QR code data URL from a string using a temporary hidden canvas.
+ */
+function generateQRDataUrl(text) {
+  return new Promise((resolve) => {
+    const container = document.createElement("div");
+    container.style.position = "fixed";
+    container.style.left = "-9999px";
+    container.style.top = "-9999px";
+    document.body.appendChild(container);
+
+    const root = createRoot(container);
+    flushSync(() => {
+      root.render(
+        createElement(QRCodeCanvas, {
+          value: text,
+          size: 200,
+          bgColor: "#ffffff",
+          fgColor: "#0f172a",
+          level: "H",
+          includeMargin: true,
+        })
+      );
+    });
+
+    // Give a small delay for canvas to render
+    requestAnimationFrame(() => {
+      const canvas = container.querySelector("canvas");
+      const dataUrl = canvas ? canvas.toDataURL("image/png") : null;
+      root.unmount();
+      document.body.removeChild(container);
+      resolve(dataUrl);
+    });
+  });
+}
+
+async function openPrintableTicket({ event, booking, ticketLabel }) {
   const safe = (v) => String(v ?? "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const ticketCode = booking.ticketCode || booking.id;
+
+  // Generate the QR code image data URL
+  const qrDataUrl = await generateQRDataUrl(ticketCode);
+
+  const qrHtml = qrDataUrl
+    ? `<img src="${qrDataUrl}" alt="QR Code" style="width:120px;height:120px;border-radius:12px;" />`
+    : `<div class="qr-box-fallback">QR<br/>${safe(String(ticketCode).slice(-8))}</div>`;
+
   const win = window.open("", "_blank");
   if (!win) return;
   win.document.write(`
@@ -28,7 +75,10 @@ function openPrintableTicket({ event, booking, ticketLabel }) {
           .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
           .field label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; display: block; margin-bottom: 4px; }
           .field p { font-size: 14px; font-weight: 700; color: #0f172a; }
-          .qr-box { width: 120px; height: 120px; background: #0f172a; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 11px; text-align: center; padding: 8px; }
+          .qr-container { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px; background: #ffffff; border: 2px solid #e2e8f0; border-radius: 16px; }
+          .qr-container img { display: block; }
+          .qr-label { font-family: monospace; font-size: 10px; font-weight: 700; color: #64748b; letter-spacing: 0.1em; text-transform: uppercase; }
+          .qr-box-fallback { width: 120px; height: 120px; background: #0f172a; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 11px; text-align: center; padding: 8px; }
           .bottom { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
           .badge { display: inline-flex; align-items: center; gap: 6px; background: #ede9fe; color: #6366f1; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 999px; }
           .team-section { margin-top: 0; }
@@ -81,7 +131,10 @@ function openPrintableTicket({ event, booking, ticketLabel }) {
                 <span class="badge">✓ Confirmed</span>
                 <p style="font-size:11px;color:#94a3b8;margin-top:8px;">Show this ticket code at entry. Valid for one-time use only.</p>
               </div>
-              <div class="qr-box">QR<br/>${safe((booking.ticketCode || booking.id).slice(-8))}</div>
+              <div class="qr-container">
+                ${qrHtml}
+                <span class="qr-label">${safe(String(ticketCode).slice(-8))}</span>
+              </div>
             </div>
             <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
           </div>
@@ -134,11 +187,11 @@ function AttendeeDashboard() {
   const confirmed = tickets.filter((t) => t.status === "confirmed");
   const totalSpent = confirmed.reduce((s, t) => s + t.total, 0);
 
-  const handleDownload = (t) => {
+  const handleDownload = async (t) => {
     const event = t.raw?.event;
     const booking = t.raw?.booking;
     if (!event || !booking) return;
-    openPrintableTicket({ event, booking, ticketLabel: t.ticketType });
+    await openPrintableTicket({ event, booking, ticketLabel: t.ticketType });
   };
 
   const handleShareWhatsApp = (t) => {
